@@ -70,6 +70,15 @@ public class MainActivity extends AppCompatActivity {
         searchButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if (hand.size()==0) {
+                    showErrorDialog("Your hand is empty!");
+                } else {
+                    String handString = new String();
+                    for (Character character: hand) {
+                        handString = handString.concat(character.toString());
+                    }
+                    requestController.getBestWord(handString);
+                }
 
             }
         });
@@ -108,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
         scoresButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                requestController.getHighScores();
             }
         });
 
@@ -163,7 +172,7 @@ public class MainActivity extends AppCompatActivity {
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                Pattern pattern = Pattern.compile("[a-zA-Z]*");
+                Pattern pattern = Pattern.compile("[a-zA-Z_.]*");
                 Matcher matcher = pattern.matcher(drawnletters.getText().toString());
                 if (!matcher.matches()) {
                     showErrorDialog("This contains illegal characters!");
@@ -420,9 +429,9 @@ public class MainActivity extends AppCompatActivity {
     private void parseHand(String handString) {
 
         for (int i=0; i<handString.length(); i++) {
-            String letter = String.valueOf(handString.charAt(i));
-            hand.add(letter.charAt(0));
-            handimages.get(i).setImageResource(getResources().getIdentifier(letter, "drawable", getPackageName()));
+
+            hand.add(handString.charAt(i));
+            handimages.get(i).setImageResource(getResources().getIdentifier(String.valueOf(handString.charAt(i)), "drawable", getPackageName()));
         }
     }
 

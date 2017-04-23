@@ -4,6 +4,7 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import org.springframework.http.converter.StringHttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
@@ -21,6 +22,40 @@ public class RequestController {
     private String operation = new String();
     private List<String> paramNames = new ArrayList<String>();
     private List<String> params = new ArrayList<String>();
+    HighScoreDTO[] highScores;
+    WordDTO bestWord;
+
+    public HighScoreDTO[] getHighScores() {
+
+        try {
+            new Top3HttpRequestTask().execute().get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+
+        for (int i=0; i<highScores.length; i++) {
+            System.out.println(highScores[i].getUser());
+        }
+
+        return highScores;
+    }
+
+    public WordDTO getBestWord(String hand) {
+
+        setHand(hand);
+        try {
+            new BestWordHttpRequestTask().execute().get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        System.out.println(bestWord.getWord());
+        bestWord.setDown(!bestWord.isDown());
+        return bestWord;
+    }
 
     public boolean checkLegitimacy(String word) {
         operation = "checklegitimacy";
@@ -103,8 +138,6 @@ public class RequestController {
                     url = url+"&"+paramNames.get(i)+"="+params.get(i);
                 }
             }
-
-            System.out.println(url);
         }
 
         @Override
@@ -122,5 +155,52 @@ public class RequestController {
 
     }
 
+    private class BestWordHttpRequestTask extends AsyncTask<Void, Void, Boolean> {
+
+        String url = new String();
+
+        private BestWordHttpRequestTask(){
+
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            try {
+                url = "http://midori:8080/getbestword";
+                RestTemplate restTemplate = new RestTemplate();
+                restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
+                bestWord = restTemplate.getForObject(url, WordDTO.class);
+                return true;
+            } catch (Exception e) {
+                Log.e("RequestController", e.getMessage(), e);
+            }
+            return null;
+        }
+
+    }
+
+    private class Top3HttpRequestTask extends AsyncTask<Void, Void, Boolean> {
+
+        String url = new String();
+
+        private Top3HttpRequestTask(){
+
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            try {
+                url = "http://midori:8080/gettopscores";
+                RestTemplate restTemplate = new RestTemplate();
+                restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
+                highScores = restTemplate.getForObject(url, HighScoreDTO[].class);
+                return true;
+            } catch (Exception e) {
+                Log.e("RequestController", e.getMessage(), e);
+            }
+            return null;
+        }
+
+    }
 }
 

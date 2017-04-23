@@ -111,6 +111,7 @@
     <orderEntry type="library" exported="" name="transition-25.2.0" level="project" />
     <orderEntry type="library" exported="" name="support-core-ui-25.2.0" level="project" />
     <orderEntry type="library" exported="" name="gridlayout-v7-25.2.0" level="project" />
+    <orderEntry type="library" exported="" name="jackson-annotations-2.3.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="jsr305-2.0.1" level="project" />
     <orderEntry type="library" exported="" name="support-core-utils-25.2.0" level="project" />
     <orderEntry type="library" exported="" name="support-fragment-25.2.0" level="project" />
@@ -121,6 +122,8 @@
     <orderEntry type="library" exported="" scope="TEST" name="javax.annotation-api-1.2" level="project" />
     <orderEntry type="library" exported="" name="spring-android-rest-template-1.0.1.RELEASE" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="javax.inject-1" level="project" />
+    <orderEntry type="library" exported="" name="jackson-core-2.3.2" level="project" />
+    <orderEntry type="library" exported="" name="jackson-databind-2.3.2" level="project" />
     <orderEntry type="library" exported="" name="support-v4-25.2.0" level="project" />
     <orderEntry type="library" exported="" name="support-compat-25.2.0" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="javawriter-2.1.1" level="project" />
