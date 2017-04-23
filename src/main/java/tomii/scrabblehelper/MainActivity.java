@@ -88,11 +88,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        final Button resetButton = (Button) findViewById(R.id.reset);
+        final Button resetButton = (Button) findViewById(R.id.admin);
         resetButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showEndConfirmationDialog("Are you sure you want to reset the board?", false);
+
             }
         });
 
@@ -140,7 +140,11 @@ public class MainActivity extends AppCompatActivity {
                     dialog.cancel();
                 } else {
                     httpParam = word.getText().toString();
-                    new HttpRequestTask().execute();
+                    if (requestController.checkLegitimacy(httpParam)) {
+                        showErrorDialog("YES");
+                    } else {
+                        showErrorDialog("NO");
+                    }
                 }
             }
         });
@@ -195,7 +199,6 @@ public class MainActivity extends AppCompatActivity {
                     showErrorDialog("This word contains illegal characters!");
                 } else {
                     placeWord(input.getText().toString(), x, y, across);
-                    firstTurn = false;
                 }
 
             }
@@ -237,45 +240,52 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void placeWord(String word, int x, int y, boolean across) {
-        char[]boardSave = new char[word.length()];
-        if (!across) {
-            for (int i=0; i<word.length();i++) {
-                if (isOverWrite(x+i, y, word.charAt(i))) {
-                    for (int k=0; k<i; k++) {
-                        if (boardSave[k] == EMPTY) {
-                            boardImages[x+k][y].setImageResource(android.R.color.transparent);
-                            board[x+k][y]=EMPTY;
-                        } else {
-                            boardImages[x + k][y].setImageResource(getResources().getIdentifier(Character.toString(boardSave[k]), "drawable", getPackageName()));
-                            board[x+k][y]=boardSave[k];
+
+        if (requestController.placeWord(new WordDTO(word, x, y, across))) {
+
+            char[] boardSave = new char[word.length()];
+            if (!across) {
+                for (int i = 0; i < word.length(); i++) {
+                    if (isOverWrite(x + i, y, word.charAt(i))) {
+                        for (int k = 0; k < i; k++) {
+                            if (boardSave[k] == EMPTY) {
+                                boardImages[x + k][y].setImageResource(android.R.color.transparent);
+                                board[x + k][y] = EMPTY;
+                            } else {
+                                boardImages[x + k][y].setImageResource(getResources().getIdentifier(Character.toString(boardSave[k]), "drawable", getPackageName()));
+                                board[x + k][y] = boardSave[k];
+                            }
                         }
+                        showErrorDialog("Illegal move: OverWriting letter already on board!");
+                        break;
                     }
-                    showErrorDialog("Illegal move: OverWriting letter already on board!");
-                    break;
+                    boardSave[i] = board[x + i][y];
+                    board[x + i][y] = word.charAt(i);
+                    boardImages[x + i][y].setImageResource(getResources().getIdentifier(Character.toString(word.charAt(i)), "drawable", getPackageName()));
                 }
-                boardSave[i]=board[x+i][y];
-                board[x+i][y]=word.charAt(i);
-                boardImages[x+i][y].setImageResource(getResources().getIdentifier(Character.toString(word.charAt(i)), "drawable", getPackageName()));
+            } else {
+                for (int i = 0; i < word.length(); i++) {
+                    if (isOverWrite(x, y + i, word.charAt(i))) {
+                        for (int k = 0; k < i; k++) {
+                            if (boardSave[k] == EMPTY) {
+                                boardImages[x][y + k].setImageResource(android.R.color.transparent);
+                                board[x][y + k] = EMPTY;
+                            } else {
+                                boardImages[x][y + k].setImageResource(getResources().getIdentifier(Character.toString(boardSave[k]), "drawable", getPackageName()));
+                                board[x][y + k] = boardSave[k];
+                            }
+                        }
+                        showErrorDialog("Illegal move: OverWriting letter already on board!");
+                        break;
+                    }
+                    boardSave[i] = board[x][y + i];
+                    board[x][y + i] = word.charAt(i);
+                    boardImages[x][y + i].setImageResource(getResources().getIdentifier(Character.toString(word.charAt(i)), "drawable", getPackageName()));
+                }
             }
+            firstTurn = false;
         } else {
-            for (int i=0; i<word.length(); i++) {
-                if (isOverWrite(x, y+i, word.charAt(i))) {
-                    for (int k=0; k<i; k++) {
-                        if (boardSave[k] == EMPTY) {
-                            boardImages[x][y+k].setImageResource(android.R.color.transparent);
-                            board[x][y+k]=EMPTY;
-                        } else {
-                            boardImages[x][y+k].setImageResource(getResources().getIdentifier(Character.toString(boardSave[k]), "drawable", getPackageName()));
-                            board[x][y+k] = boardSave[k];
-                        }
-                    }
-                    showErrorDialog("Illegal move: OverWriting letter already on board!");
-                    break;
-                }
-                boardSave[i]=board[x][y+i];
-                board[x][y+i]=word.charAt(i);
-                boardImages[x][y+i].setImageResource(getResources().getIdentifier(Character.toString(word.charAt(i)), "drawable", getPackageName()));
-            }
+            showErrorDialog("Not a legit word!");
         }
     }
 
@@ -478,7 +488,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Boolean exists) {
             if (exists) {
-                showErrorDialog("YES");
+
             } else {
                 showErrorDialog("NO");
             }
