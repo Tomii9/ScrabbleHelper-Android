@@ -57,6 +57,35 @@ public class RequestController {
         return bestWord;
     }
 
+    public boolean endGame() {
+
+        operation = "resetboard";
+        try {
+            new BooleanHttpRequestTask(paramNames, params).execute().get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        boolean tempResponse = response;
+        reset();
+        return tempResponse;
+    }
+
+    public boolean refreshCache() {
+        operation = "refreshcache";
+        try {
+            new BooleanHttpRequestTask(paramNames, params).execute().get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        boolean tempResponse = response;
+        reset();
+        return tempResponse;
+    }
+
     public boolean checkLegitimacy(String word) {
         operation = "checklegitimacy";
         paramNames.add("word");

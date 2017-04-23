@@ -15,14 +15,8 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.Toast;
-
 import org.springframework.http.converter.StringHttpMessageConverter;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
-
-import java.net.Inet4Address;
-import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -42,7 +36,6 @@ public class MainActivity extends AppCompatActivity {
     int[] coord;
     private char EMPTY = '\u0000';
     String httpParam;
-    String httpURL;
     RequestController requestController = new RequestController();
 
     @Override
@@ -77,7 +70,13 @@ public class MainActivity extends AppCompatActivity {
                     for (Character character: hand) {
                         handString = handString.concat(character.toString());
                     }
-                    requestController.getBestWord(handString);
+                    WordDTO wordDTO =requestController.getBestWord(handString);
+                    if (wordDTO.getWord() == null) {
+                        showErrorDialog("Cannot find any word, pass the play and shuffle your hand!");
+                    } else {
+                        placeWord(wordDTO.getWord(), wordDTO.getX(), wordDTO.getY(), wordDTO.isDown());
+                        highlightRecentlyPlacedWord(wordDTO);
+                    }
                 }
 
             }
@@ -125,10 +124,20 @@ public class MainActivity extends AppCompatActivity {
         endButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showEndConfirmationDialog("Are you sure you want to end the game?", true);
+                showEndConfirmationDialog("Are you sure you want to end the game?");
             }
         });
 
+    }
+
+    private void highlightRecentlyPlacedWord(WordDTO wordDTO) {
+        if (wordDTO.isDown()) {
+            selectTile(wordDTO.getX(), wordDTO.getY(), false);
+            selectTile(wordDTO.getX(), wordDTO.getY()+wordDTO.getWord().length()-1, false);
+        } else {
+            selectTile(wordDTO.getX(), wordDTO.getY(), false);
+            selectTile(wordDTO.getX()+wordDTO.getWord().length()-1, wordDTO.getY(), false);
+        }
     }
 
     private void showCheckDialog() {
@@ -207,7 +216,11 @@ public class MainActivity extends AppCompatActivity {
                 } else if (!matcher.matches()) {
                     showErrorDialog("This word contains illegal characters!");
                 } else {
-                    placeWord(input.getText().toString(), x, y, across);
+                    if (requestController.placeWord(new WordDTO(input.getText().toString(), x, y, across, 0))) {
+                        placeWord(input.getText().toString(), x, y, across);
+                    } else {
+                        showErrorDialog("Not a legit word!");
+                    }
                 }
 
             }
@@ -217,7 +230,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void showEndConfirmationDialog(String message, final boolean endgame) {
+    private void showEndConfirmationDialog(String message) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
 
         builder.setTitle(message);
@@ -226,9 +239,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(DialogInterface dialog, int which) {
                 resetBoard();
                 clearSelectionsOnBoard();
-                if (endgame) {
-                    // TODO
-                }
+               requestController.endGame();
             }
         });
         builder.setNegativeButton("Cancel", null);
@@ -250,52 +261,48 @@ public class MainActivity extends AppCompatActivity {
 
     private void placeWord(String word, int x, int y, boolean across) {
 
-        if (requestController.placeWord(new WordDTO(word, x, y, across))) {
-
-            char[] boardSave = new char[word.length()];
-            if (!across) {
-                for (int i = 0; i < word.length(); i++) {
-                    if (isOverWrite(x + i, y, word.charAt(i))) {
-                        for (int k = 0; k < i; k++) {
-                            if (boardSave[k] == EMPTY) {
-                                boardImages[x + k][y].setImageResource(android.R.color.transparent);
-                                board[x + k][y] = EMPTY;
-                            } else {
-                                boardImages[x + k][y].setImageResource(getResources().getIdentifier(Character.toString(boardSave[k]), "drawable", getPackageName()));
-                                board[x + k][y] = boardSave[k];
-                            }
+        char[] boardSave = new char[word.length()];
+        if (!across) {
+            for (int i = 0; i < word.length(); i++) {
+                if (isOverWrite(x + i, y, word.charAt(i))) {
+                    for (int k = 0; k < i; k++) {
+                        if (boardSave[k] == EMPTY) {
+                            boardImages[x + k][y].setImageResource(android.R.color.transparent);
+                            board[x + k][y] = EMPTY;
+                        } else {
+                            boardImages[x + k][y].setImageResource(getResources().getIdentifier(Character.toString(boardSave[k]), "drawable", getPackageName()));
+                            board[x + k][y] = boardSave[k];
                         }
-                        showErrorDialog("Illegal move: OverWriting letter already on board!");
-                        break;
                     }
-                    boardSave[i] = board[x + i][y];
-                    board[x + i][y] = word.charAt(i);
-                    boardImages[x + i][y].setImageResource(getResources().getIdentifier(Character.toString(word.charAt(i)), "drawable", getPackageName()));
+                    showErrorDialog("Illegal move: OverWriting letter already on board!");
+                    break;
                 }
-            } else {
-                for (int i = 0; i < word.length(); i++) {
-                    if (isOverWrite(x, y + i, word.charAt(i))) {
-                        for (int k = 0; k < i; k++) {
-                            if (boardSave[k] == EMPTY) {
-                                boardImages[x][y + k].setImageResource(android.R.color.transparent);
-                                board[x][y + k] = EMPTY;
-                            } else {
-                                boardImages[x][y + k].setImageResource(getResources().getIdentifier(Character.toString(boardSave[k]), "drawable", getPackageName()));
-                                board[x][y + k] = boardSave[k];
-                            }
-                        }
-                        showErrorDialog("Illegal move: OverWriting letter already on board!");
-                        break;
-                    }
-                    boardSave[i] = board[x][y + i];
-                    board[x][y + i] = word.charAt(i);
-                    boardImages[x][y + i].setImageResource(getResources().getIdentifier(Character.toString(word.charAt(i)), "drawable", getPackageName()));
-                }
+                boardSave[i] = board[x + i][y];
+                board[x + i][y] = word.charAt(i);
+                boardImages[x + i][y].setImageResource(getResources().getIdentifier(Character.toString(word.charAt(i)), "drawable", getPackageName()));
             }
-            firstTurn = false;
         } else {
-            showErrorDialog("Not a legit word!");
+            for (int i = 0; i < word.length(); i++) {
+                if (isOverWrite(x, y + i, word.charAt(i))) {
+                    for (int k = 0; k < i; k++) {
+                        if (boardSave[k] == EMPTY) {
+                            boardImages[x][y + k].setImageResource(android.R.color.transparent);
+                            board[x][y + k] = EMPTY;
+                        } else {
+                            boardImages[x][y + k].setImageResource(getResources().getIdentifier(Character.toString(boardSave[k]), "drawable", getPackageName()));
+                            board[x][y + k] = boardSave[k];
+                        }
+                    }
+                    showErrorDialog("Illegal move: OverWriting letter already on board!");
+                    break;
+                }
+                boardSave[i] = board[x][y + i];
+                board[x][y + i] = word.charAt(i);
+                boardImages[x][y + i].setImageResource(getResources().getIdentifier(Character.toString(word.charAt(i)), "drawable", getPackageName()));
+            }
         }
+        firstTurn = false;
+
     }
 
     private boolean isOverWrite(int x, int y, char c) {
@@ -331,7 +338,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
 
-                        selectTile(x, y);
+                        selectTile(x, y, true);
 
                         return false;
                     }
@@ -348,7 +355,7 @@ public class MainActivity extends AppCompatActivity {
         drawBonusFields();
     }
 
-    private void selectTile(int x, int y) {
+    private void selectTile(int x, int y, boolean showDialog) {
         boolean legalMove = false;
         if (firstSelection) {
             clearSelectionsOnBoard();
@@ -373,12 +380,12 @@ public class MainActivity extends AppCompatActivity {
                         legalMove = true;
                     }
                 }
-                if (legalMove) {
+                if (legalMove && showDialog) {
                     showInputDialog(Math.abs(coord[1] - y) + 1, x, y, true);
-                }else if (firstTurn){
+                }else if (firstTurn && showDialog){
                     showErrorDialog("It is the first turn, you have to use the middle tile!");
                     clearSelectionsOnBoard();
-                } else{
+                } else if (showDialog){
                     showErrorDialog("Illegal move: Doesn't connect to any letter on the board!");
                     clearSelectionsOnBoard();
                 }
@@ -399,12 +406,12 @@ public class MainActivity extends AppCompatActivity {
                         legalMove = true;
                     }
                 }
-                if (legalMove) {
+                if (legalMove && showDialog) {
                     showInputDialog(Math.abs(coord[0] - x) + 1, x, y, false);
-                } else if (firstTurn){
+                } else if (firstTurn && showDialog){
                     showErrorDialog("It is the first turn, you have to use the middle tile!");
                     clearSelectionsOnBoard();
-                } else {
+                } else if (showDialog){
                     showErrorDialog("Illegal move: Doesn't connect to any letter on the board!");
                     clearSelectionsOnBoard();
                 }
@@ -427,18 +434,27 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void parseHand(String handString) {
-
         for (int i=0; i<handString.length(); i++) {
-
+            System.out.println(handString.charAt(i));
             hand.add(handString.charAt(i));
-            handimages.get(i).setImageResource(getResources().getIdentifier(String.valueOf(handString.charAt(i)), "drawable", getPackageName()));
+            if (handString.charAt(i) == '.') {
+                handimages.get(i).setImageResource(getResources().getIdentifier("joker", "drawable", getPackageName()));
+            } else {
+                handimages.get(i).setImageResource(getResources().getIdentifier(String.valueOf(handString.charAt(i)), "drawable", getPackageName()));
+            }
+
         }
     }
 
     private void refreshHand() {
         for (int i = 0; i < 7; i++) {
             if (i < hand.size()) {
-                handimages.get(i).setImageResource(getResources().getIdentifier(hand.get(i).toString(), "drawable", getPackageName()));
+                if (hand.get(i) == '.') {
+                    handimages.get(i).setImageResource(getResources().getIdentifier("joker", "drawable", getPackageName()));
+                } else {
+                    handimages.get(i).setImageResource(getResources().getIdentifier(hand.get(i).toString(), "drawable", getPackageName()));
+                }
+
             } else {
                 handimages.get(i).setImageResource(android.R.color.transparent);
             }

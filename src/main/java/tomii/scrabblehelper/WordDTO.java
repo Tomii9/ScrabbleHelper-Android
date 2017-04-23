@@ -9,15 +9,17 @@ public class WordDTO {
     private int x;
     private int y;
     private boolean down;
+    private int value;
 
     public WordDTO () {
     }
 
-    public WordDTO (String word, int x, int y, boolean down) {
+    public WordDTO (String word, int x, int y, boolean down, int value) {
         this.word = word;
         this.x = x;
         this.y = y;
         this.down = down;
+        this.value = value;
     }
 
     public WordDTO (String word) {
@@ -54,5 +56,13 @@ public class WordDTO {
 
     public void setDown(boolean down) {
         this.down = down;
+    }
+
+    public int getValue() {
+        return value;
+    }
+
+    public void setValue(int value) {
+        this.value = value;
     }
 }

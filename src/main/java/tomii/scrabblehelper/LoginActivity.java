@@ -8,6 +8,8 @@ import android.widget.Button;
 
 public class LoginActivity extends AppCompatActivity {
 
+    RequestController requestController = new RequestController();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -16,6 +18,7 @@ public class LoginActivity extends AppCompatActivity {
             button.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    requestController.refreshCache();
                     Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                     startActivity(intent);
                 }
