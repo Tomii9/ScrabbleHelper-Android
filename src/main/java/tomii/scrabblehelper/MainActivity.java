@@ -30,13 +30,14 @@ public class MainActivity extends AppCompatActivity {
     private List<Character> hand;
     private ImageView[][] boardImages;
     private DisplayMetrics displayMetrics;
-    char[][] board;
-    boolean firstTurn;
-    boolean firstSelection;
-    int[] coord;
+    private char[][] board;
+    private boolean firstTurn;
+    private boolean firstSelection;
+    private int[] coord;
     private char EMPTY = '\u0000';
-    String httpParam;
-    RequestController requestController = new RequestController();
+    private String httpParam;
+    private HighScoreDTO [] topScores;
+    private RequestController requestController = new RequestController();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,7 +117,8 @@ public class MainActivity extends AppCompatActivity {
         scoresButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                requestController.getHighScores();
+                topScores = requestController.getHighScores();
+                showTopScoreDialog(topScores);
             }
         });
 
@@ -138,6 +140,26 @@ public class MainActivity extends AppCompatActivity {
             selectTile(wordDTO.getX(), wordDTO.getY(), false);
             selectTile(wordDTO.getX()+wordDTO.getWord().length()-1, wordDTO.getY(), false);
         }
+    }
+
+    private void showTopScoreDialog(HighScoreDTO[] highScores) {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        builder.setTitle("High Scores");
+        String message = new String();
+        for (int i=0; i<3; i++) {
+            message = message.concat(i + 1 + ". " + highScores[i].getUser() + " - " + highScores[i].getHighscore() + " - " + highScores[i].getDate() + "\n");
+        }
+        if (highScores.length>3) {
+            message = message.concat("Your score: " + highScores[3].getHighscore() + " - " + highScores[3].getDate());
+        }
+        builder.setMessage(message);
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        builder.show();
     }
 
     private void showCheckDialog() {
