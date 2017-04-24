@@ -1,8 +1,6 @@
 package tomii.scrabblehelper;
 
 import android.app.Application;
-import android.widget.ImageView;
-
 import java.util.List;
 import java.util.Vector;
 
@@ -10,6 +8,7 @@ public class ScrabbleHelperApp extends Application {
     private List<Character> hand = new Vector<Character>();
     private String connectionURL;
     char[][] board;
+    int score;
 
     @Override
     public void onCreate() {
@@ -39,5 +38,13 @@ public class ScrabbleHelperApp extends Application {
 
     public void setBoard(char[][] board) {
         this.board = board;
+    }
+
+    public int getScore() {
+        return score;
+    }
+
+    public void setScore(int score) {
+        this.score = score;
     }
 }

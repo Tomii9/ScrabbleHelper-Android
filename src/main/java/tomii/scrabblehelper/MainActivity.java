@@ -15,6 +15,8 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
+
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
@@ -36,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
     private int[] coord;
     private char EMPTY = '\u0000';
     private String httpParam;
+    private int score;
     private HighScoreDTO [] topScores;
     private RequestController requestController = new RequestController();
 
@@ -51,6 +54,8 @@ public class MainActivity extends AppCompatActivity {
         board = ((ScrabbleHelperApp) MainActivity.this.getApplication()).getBoard();
         boardImages = new ImageView[15][15];
         hand = ((ScrabbleHelperApp) MainActivity.this.getApplication()).getHand();
+        score = ((ScrabbleHelperApp) MainActivity.this.getApplication()).getScore();
+        setScore(score);
         firstTurn = board[7][7] == EMPTY;
         handimages = new ArrayList<>();
         for (int i=0; i<7; i++) {
@@ -66,18 +71,10 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if (hand.size()==0) {
                     showErrorDialog("Your hand is empty!");
+                } else if (hand.size()<7) {
+                    showConfirmationDialog("Your hand isn't full. Are you unable to draw letters?", "nonFullHand");
                 } else {
-                    String handString = new String();
-                    for (Character character: hand) {
-                        handString = handString.concat(character.toString());
-                    }
-                    WordDTO wordDTO =requestController.getBestWord(handString);
-                    if (wordDTO.getWord() == null) {
-                        showErrorDialog("Cannot find any word, pass the play and shuffle your hand!");
-                    } else {
-                        placeWord(wordDTO.getWord(), wordDTO.getX(), wordDTO.getY(), wordDTO.isDown());
-                        highlightRecentlyPlacedWord(wordDTO);
-                    }
+                    getBestWord();
                 }
 
             }
@@ -126,18 +123,47 @@ public class MainActivity extends AppCompatActivity {
         endButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showEndConfirmationDialog("Are you sure you want to end the game?");
+                showConfirmationDialog("Are you sure you want to end the game?", "endGame");
             }
         });
 
     }
 
+    private void getBestWord() {
+        String handString = new String();
+        for (Character character: hand) {
+            handString = handString.concat(character.toString());
+        }
+        WordDTO wordDTO =requestController.getBestWord(handString);
+        if (wordDTO.getWord() == null) {
+            showErrorDialog("Cannot find any word, pass the play and shuffle your hand!");
+        } else {
+            placeWord(wordDTO.getWord(), wordDTO.getX(), wordDTO.getY(), wordDTO.isDown(), true);
+            highlightRecentlyPlacedWord(wordDTO);
+            setScore(score + wordDTO.getValue());
+        }
+    }
+
+    private void endGame() {
+        resetBoard();
+        clearSelectionsOnBoard();
+        if (requestController.getOwnHighScore().getHighscore() < score) {
+            requestController.setHighScore(score);
+            showErrorDialog("New High Score: " + score);
+        } else {
+            showErrorDialog("Final Score: " + score);
+        }
+        hand.clear();
+        refreshHand();
+        setScore(0);
+        requestController.endGame();
+    }
+
     private void highlightRecentlyPlacedWord(WordDTO wordDTO) {
+        selectTile(wordDTO.getX(), wordDTO.getY(), false);
         if (wordDTO.isDown()) {
-            selectTile(wordDTO.getX(), wordDTO.getY(), false);
             selectTile(wordDTO.getX(), wordDTO.getY()+wordDTO.getWord().length()-1, false);
         } else {
-            selectTile(wordDTO.getX(), wordDTO.getY(), false);
             selectTile(wordDTO.getX()+wordDTO.getWord().length()-1, wordDTO.getY(), false);
         }
     }
@@ -147,6 +173,9 @@ public class MainActivity extends AppCompatActivity {
         builder.setTitle("High Scores");
         String message = new String();
         for (int i=0; i<3; i++) {
+            if (highScores[i].getUser().equals("Admin")) {
+                message = message.concat("=> ");
+            }
             message = message.concat(i + 1 + ". " + highScores[i].getUser() + " - " + highScores[i].getHighscore() + " - " + highScores[i].getDate() + "\n");
         }
         if (highScores.length>3) {
@@ -239,7 +268,7 @@ public class MainActivity extends AppCompatActivity {
                     showErrorDialog("This word contains illegal characters!");
                 } else {
                     if (requestController.placeWord(new WordDTO(input.getText().toString(), x, y, across, 0))) {
-                        placeWord(input.getText().toString(), x, y, across);
+                        placeWord(input.getText().toString(), x, y, across, false);
                     } else {
                         showErrorDialog("Not a legit word!");
                     }
@@ -252,16 +281,22 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void showEndConfirmationDialog(String message) {
+    private void showConfirmationDialog(String message, final String action) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
 
         builder.setTitle(message);
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                resetBoard();
-                clearSelectionsOnBoard();
-               requestController.endGame();
+                switch (action) {
+                    case "endGame":
+                        endGame();
+                        break;
+                    case "nonFullHand":
+                        getBestWord();
+                        break;
+                }
+
             }
         });
         builder.setNegativeButton("Cancel", null);
@@ -281,7 +316,7 @@ public class MainActivity extends AppCompatActivity {
         builder.show();
     }
 
-    private void placeWord(String word, int x, int y, boolean across) {
+    private void placeWord(String word, int x, int y, boolean across, boolean ownPlacement) {
 
         char[] boardSave = new char[word.length()];
         if (!across) {
@@ -298,6 +333,9 @@ public class MainActivity extends AppCompatActivity {
                     }
                     showErrorDialog("Illegal move: OverWriting letter already on board!");
                     break;
+                }
+                if (ownPlacement) {
+                    hand.remove(new Character(word.charAt(i)));
                 }
                 boardSave[i] = board[x + i][y];
                 board[x + i][y] = word.charAt(i);
@@ -318,13 +356,16 @@ public class MainActivity extends AppCompatActivity {
                     showErrorDialog("Illegal move: OverWriting letter already on board!");
                     break;
                 }
+                if (ownPlacement) {
+                    hand.remove(new Character(word.charAt(i)));
+                }
                 boardSave[i] = board[x][y + i];
                 board[x][y + i] = word.charAt(i);
                 boardImages[x][y + i].setImageResource(getResources().getIdentifier(Character.toString(word.charAt(i)), "drawable", getPackageName()));
             }
         }
         firstTurn = false;
-
+        refreshHand();
     }
 
     private boolean isOverWrite(int x, int y, char c) {
@@ -491,6 +532,12 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         firstTurn=true;
+    }
+
+    private void setScore(int score) {
+        TextView scoreText = (TextView) findViewById(getResources().getIdentifier("score", "id", getPackageName()));
+        scoreText.setText("points: " + score);
+        this.score = score;
     }
 
     private void drawBonusFields() {

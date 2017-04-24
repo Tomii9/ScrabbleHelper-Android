@@ -23,6 +23,7 @@ public class RequestController {
     private List<String> paramNames = new ArrayList<String>();
     private List<String> params = new ArrayList<String>();
     HighScoreDTO[] highScores;
+    HighScoreDTO ownHighScore;
     WordDTO bestWord;
 
     public HighScoreDTO[] getHighScores() {
@@ -40,6 +41,36 @@ public class RequestController {
         }
 
         return highScores;
+    }
+
+    public HighScoreDTO getOwnHighScore() {
+        try {
+            new HighScoreHttpRequestTask().execute().get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+
+        return ownHighScore;
+    }
+
+    public boolean setHighScore(int score) {
+
+        operation = "sethighscore";
+        paramNames.add("score");
+        params.add(String.valueOf(score));
+        try {
+            new BooleanHttpRequestTask(paramNames, params).execute().get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+
+        boolean tempResponse = response;
+        reset();
+        return tempResponse;
     }
 
     public WordDTO getBestWord(String hand) {
@@ -223,6 +254,30 @@ public class RequestController {
                 RestTemplate restTemplate = new RestTemplate();
                 restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
                 highScores = restTemplate.getForObject(url, HighScoreDTO[].class);
+                return true;
+            } catch (Exception e) {
+                Log.e("RequestController", e.getMessage(), e);
+            }
+            return null;
+        }
+
+    }
+
+    private class HighScoreHttpRequestTask extends AsyncTask<Void, Void, Boolean> {
+
+        String url = new String();
+
+        private HighScoreHttpRequestTask(){
+
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            try {
+                url = "http://midori:8080/getownhighscore";
+                RestTemplate restTemplate = new RestTemplate();
+                restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
+                ownHighScore = restTemplate.getForObject(url, HighScoreDTO.class);
                 return true;
             } catch (Exception e) {
                 Log.e("RequestController", e.getMessage(), e);
