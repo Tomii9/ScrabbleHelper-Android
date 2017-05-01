@@ -17,19 +17,26 @@ import java.util.concurrent.ExecutionException;
 
 public class RequestController {
 
-    private String request = new String();
+    private String token = new String();
     private boolean response = false;
     private String operation = new String();
     private List<String> paramNames = new ArrayList<String>();
     private List<String> params = new ArrayList<String>();
-    HighScoreDTO[] highScores;
-    HighScoreDTO ownHighScore;
-    WordDTO bestWord;
+    private HighScoreDTO[] highScores;
+    private HighScoreDTO ownHighScore;
+    private WordDTO bestWord;
+    private SessionDTO sessionDTO;
+
+    public RequestController(String token) {
+        this.token = token;
+    }
 
     public HighScoreDTO[] getHighScores() {
-
+        operation = "gettopscores";
+        paramNames.add("token");
+        params.add(token);
         try {
-            new Top3HttpRequestTask().execute().get();
+            new Top3HttpRequestTask(paramNames, params).execute().get();
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (ExecutionException e) {
@@ -39,19 +46,22 @@ public class RequestController {
         for (int i=0; i<highScores.length; i++) {
             System.out.println(highScores[i].getUser());
         }
-
+        reset();
         return highScores;
     }
 
     public HighScoreDTO getOwnHighScore() {
+        operation = "getownhighscore";
+        paramNames.add("token");
+        params.add(token);
         try {
-            new HighScoreHttpRequestTask().execute().get();
+            new HighScoreHttpRequestTask(paramNames, params).execute().get();
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (ExecutionException e) {
             e.printStackTrace();
         }
-
+        reset();
         return ownHighScore;
     }
 
@@ -59,7 +69,9 @@ public class RequestController {
 
         operation = "sethighscore";
         paramNames.add("score");
+        paramNames.add("token");
         params.add(String.valueOf(score));
+        params.add(token);
         try {
             new BooleanHttpRequestTask(paramNames, params).execute().get();
         } catch (InterruptedException e) {
@@ -74,10 +86,12 @@ public class RequestController {
     }
 
     public WordDTO getBestWord(String hand) {
-
         setHand(hand);
+        operation = "getbestword";
+        paramNames.add("token");
+        params.add(token);
         try {
-            new BestWordHttpRequestTask().execute().get();
+            new BestWordHttpRequestTask(paramNames, params).execute().get();
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (ExecutionException e) {
@@ -85,12 +99,15 @@ public class RequestController {
         }
         System.out.println(bestWord.getWord());
         bestWord.setDown(!bestWord.isDown());
+        reset();
         return bestWord;
     }
 
     public boolean endGame() {
 
         operation = "resetboard";
+        paramNames.add("token");
+        params.add(token);
         try {
             new BooleanHttpRequestTask(paramNames, params).execute().get();
         } catch (InterruptedException e) {
@@ -105,6 +122,8 @@ public class RequestController {
 
     public boolean refreshCache() {
         operation = "refreshcache";
+        paramNames.add("token");
+        params.add(token);
         try {
             new BooleanHttpRequestTask(paramNames, params).execute().get();
         } catch (InterruptedException e) {
@@ -120,7 +139,9 @@ public class RequestController {
     public boolean checkLegitimacy(String word) {
         operation = "checklegitimacy";
         paramNames.add("word");
+        paramNames.add("token");
         params.add(word);
+        params.add(token);
         try {
             new BooleanHttpRequestTask(paramNames, params).execute().get();
         } catch (InterruptedException e) {
@@ -140,6 +161,8 @@ public class RequestController {
             paramNames.add("x");
             paramNames.add("y");
             paramNames.add("down");
+            paramNames.add("token");
+            params.add(token);
             params.add(word.getWord());
             params.add(String.valueOf(word.getX()));
             params.add(String.valueOf(word.getY()));
@@ -162,7 +185,42 @@ public class RequestController {
 
         operation = "sethand";
         paramNames.add("hand");
+        paramNames.add("token");
         params.add(hand);
+        params.add(token);
+        try {
+            new BooleanHttpRequestTask(paramNames, params).execute().get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        boolean tempResponse = response;
+        reset();
+        return tempResponse;
+    }
+
+    public SessionDTO login(String userName, String password) {
+        operation = "login";
+        paramNames.add("user");
+        paramNames.add("password");
+        params.add(userName);
+        params.add(password);
+        try {
+            new AuthenticationHTttpRequestTask(paramNames, params).execute().get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        reset();
+        return sessionDTO;
+    }
+
+    public boolean logout() {
+        operation = "logout";
+        paramNames.add("token");
+        params.add(token);
         try {
             new BooleanHttpRequestTask(paramNames, params).execute().get();
         } catch (InterruptedException e) {
@@ -176,7 +234,6 @@ public class RequestController {
     }
 
     private void reset() {
-        request = new String();
         response = false;
         operation = new String();
         paramNames = new ArrayList<String>();
@@ -219,14 +276,22 @@ public class RequestController {
 
         String url = new String();
 
-        private BestWordHttpRequestTask(){
+        private BestWordHttpRequestTask(List<String> paramNames, List<String> params){
+            url = "http://midori:8080/" + operation;
 
+            for (int i=0; i<params.size(); i++) {
+                if (i==0) {
+                    url = url+"?"+paramNames.get(i)+"="+params.get(i);
+                } else {
+                    url = url+"&"+paramNames.get(i)+"="+params.get(i);
+                }
+            }
+            System.out.println(url);
         }
 
         @Override
         protected Boolean doInBackground(Void... params) {
             try {
-                url = "http://midori:8080/getbestword";
                 RestTemplate restTemplate = new RestTemplate();
                 restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
                 bestWord = restTemplate.getForObject(url, WordDTO.class);
@@ -243,14 +308,22 @@ public class RequestController {
 
         String url = new String();
 
-        private Top3HttpRequestTask(){
+        private Top3HttpRequestTask(List<String> paramNames, List<String> params){
+            url = "http://midori:8080/" + operation;
 
+            for (int i=0; i<params.size(); i++) {
+                if (i==0) {
+                    url = url+"?"+paramNames.get(i)+"="+params.get(i);
+                } else {
+                    url = url+"&"+paramNames.get(i)+"="+params.get(i);
+                }
+            }
+            System.out.println(url);
         }
 
         @Override
         protected Boolean doInBackground(Void... params) {
             try {
-                url = "http://midori:8080/gettopscores";
                 RestTemplate restTemplate = new RestTemplate();
                 restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
                 highScores = restTemplate.getForObject(url, HighScoreDTO[].class);
@@ -267,17 +340,56 @@ public class RequestController {
 
         String url = new String();
 
-        private HighScoreHttpRequestTask(){
+        private HighScoreHttpRequestTask(List<String> paramNames, List<String> params){
+            url = "http://midori:8080/" + operation;
 
+            for (int i=0; i<params.size(); i++) {
+                if (i==0) {
+                    url = url+"?"+paramNames.get(i)+"="+params.get(i);
+                } else {
+                    url = url+"&"+paramNames.get(i)+"="+params.get(i);
+                }
+            }
+            System.out.println(url);
         }
 
         @Override
         protected Boolean doInBackground(Void... params) {
             try {
-                url = "http://midori:8080/getownhighscore";
                 RestTemplate restTemplate = new RestTemplate();
                 restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
                 ownHighScore = restTemplate.getForObject(url, HighScoreDTO.class);
+                return true;
+            } catch (Exception e) {
+                Log.e("RequestController", e.getMessage(), e);
+            }
+            return null;
+        }
+
+    }
+
+    private class AuthenticationHTttpRequestTask extends AsyncTask<Void, Void, Boolean> {
+        String url = new String();
+
+        private AuthenticationHTttpRequestTask(List<String> paramNames, List<String> params) {
+            url = "http://midori:8080/" + operation;
+
+            for (int i=0; i<params.size(); i++) {
+                if (i==0) {
+                    url = url+"?"+paramNames.get(i)+"="+params.get(i);
+                } else {
+                    url = url+"&"+paramNames.get(i)+"="+params.get(i);
+                }
+            }
+            System.out.println(url);
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            try {
+                RestTemplate restTemplate = new RestTemplate();
+                restTemplate.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
+                sessionDTO = restTemplate.getForObject(url, SessionDTO.class);
                 return true;
             } catch (Exception e) {
                 Log.e("RequestController", e.getMessage(), e);

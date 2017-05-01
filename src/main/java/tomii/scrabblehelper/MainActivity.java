@@ -1,6 +1,7 @@
 package tomii.scrabblehelper;
 
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -40,15 +41,16 @@ public class MainActivity extends AppCompatActivity {
     private String httpParam;
     private int score;
     private HighScoreDTO [] topScores;
-    private RequestController requestController = new RequestController();
+    private RequestController requestController;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        final ScrabbleHelperApp app = (ScrabbleHelperApp) getApplicationContext();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getRealMetrics(displayMetrics);
-
+        requestController = new RequestController(((ScrabbleHelperApp) MainActivity.this.getApplication()).getToken());
         firstSelection = true;
         coord = new int[2];
         board = ((ScrabbleHelperApp) MainActivity.this.getApplication()).getBoard();
@@ -64,6 +66,14 @@ public class MainActivity extends AppCompatActivity {
         }
 
         setupBoard();
+
+        Button logoutButton = (Button) findViewById(R.id.logout);
+        logoutButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showConfirmationDialog("Are you sure you want to log out?", "logout");
+            }
+        });
 
         Button searchButton = (Button) findViewById(R.id.search);
         searchButton.setOnClickListener(new View.OnClickListener() {
@@ -127,6 +137,12 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    private void logout() {
+        requestController.logout();
+        Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+        startActivity(intent);
     }
 
     private void getBestWord() {
@@ -295,6 +311,9 @@ public class MainActivity extends AppCompatActivity {
                     case "nonFullHand":
                         getBestWord();
                         break;
+                    case "logout":
+                        logout();
+                        break;
                 }
 
             }
@@ -335,7 +354,11 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 }
                 if (ownPlacement) {
-                    hand.remove(new Character(word.charAt(i)));
+                    if (!hand.contains(new Character(word.charAt(i)))) {
+                        hand.remove(new Character('.'));
+                    } else {
+                        hand.remove(new Character(word.charAt(i)));
+                    }
                 }
                 boardSave[i] = board[x + i][y];
                 board[x + i][y] = word.charAt(i);
@@ -357,7 +380,11 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 }
                 if (ownPlacement) {
-                    hand.remove(new Character(word.charAt(i)));
+                    if (!hand.contains(new Character(word.charAt(i)))) {
+                        hand.remove(new Character('.'));
+                    } else {
+                        hand.remove(new Character(word.charAt(i)));
+                    }
                 }
                 boardSave[i] = board[x][y + i];
                 board[x][y + i] = word.charAt(i);
@@ -505,7 +532,6 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 handimages.get(i).setImageResource(getResources().getIdentifier(String.valueOf(handString.charAt(i)), "drawable", getPackageName()));
             }
-
         }
     }
 

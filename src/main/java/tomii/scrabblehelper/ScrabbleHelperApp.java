@@ -7,6 +7,7 @@ import java.util.Vector;
 public class ScrabbleHelperApp extends Application {
     private List<Character> hand = new Vector<Character>();
     private String connectionURL;
+    private String token = new String();
     char[][] board;
     int score;
 
@@ -46,5 +47,13 @@ public class ScrabbleHelperApp extends Application {
 
     public void setScore(int score) {
         this.score = score;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 }
