@@ -6,10 +6,11 @@ import java.util.Vector;
 
 public class ScrabbleHelperApp extends Application {
     private List<Character> hand = new Vector<Character>();
-    private String connectionURL;
+    private String server;
     private String token = new String();
-    char[][] board;
-    int score;
+    private boolean isAdmin;
+    private char[][] board;
+    private int score;
 
     @Override
     public void onCreate() {
@@ -25,12 +26,12 @@ public class ScrabbleHelperApp extends Application {
         this.hand = hand;
     }
 
-    public String getConnectionURL() {
-        return connectionURL;
+    public String getServer() {
+        return server;
     }
 
-    public void setConnectionURL(String connectionURL) {
-        this.connectionURL = connectionURL;
+    public void setServer(String server) {
+        this.server = server;
     }
 
     public char[][] getBoard() {
@@ -55,5 +56,13 @@ public class ScrabbleHelperApp extends Application {
 
     public void setToken(String token) {
         this.token = token;
+    }
+
+    public boolean isAdmin() {
+        return isAdmin;
+    }
+
+    public void setAdmin(boolean admin) {
+        isAdmin = admin;
     }
 }

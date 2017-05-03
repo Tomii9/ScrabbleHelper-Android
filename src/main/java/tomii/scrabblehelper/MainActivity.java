@@ -1,5 +1,6 @@
 package tomii.scrabblehelper;
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -16,6 +17,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import org.springframework.http.converter.StringHttpMessageConverter;
@@ -42,21 +44,24 @@ public class MainActivity extends AppCompatActivity {
     private int score;
     private HighScoreDTO [] topScores;
     private RequestController requestController;
+    private boolean isAdmin;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        final ScrabbleHelperApp app = (ScrabbleHelperApp) getApplicationContext();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getRealMetrics(displayMetrics);
-        requestController = new RequestController(((ScrabbleHelperApp) MainActivity.this.getApplication()).getToken());
+        String token = ((ScrabbleHelperApp) MainActivity.this.getApplication()).getToken();
+        String server = ((ScrabbleHelperApp) MainActivity.this.getApplication()).getServer();
+        requestController = new RequestController(token, server);
         firstSelection = true;
         coord = new int[2];
         board = ((ScrabbleHelperApp) MainActivity.this.getApplication()).getBoard();
         boardImages = new ImageView[15][15];
         hand = ((ScrabbleHelperApp) MainActivity.this.getApplication()).getHand();
         score = ((ScrabbleHelperApp) MainActivity.this.getApplication()).getScore();
+        isAdmin = ((ScrabbleHelperApp) MainActivity.this.getApplication()).isAdmin();
         setScore(score);
         firstTurn = board[7][7] == EMPTY;
         handimages = new ArrayList<>();
@@ -104,13 +109,16 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        final Button resetButton = (Button) findViewById(R.id.admin);
-        resetButton.setOnClickListener(new View.OnClickListener() {
+        final Button adminButton = (Button) findViewById(R.id.admin);
+        adminButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                showAdminDialog();
             }
         });
+        if (!isAdmin) {
+            adminButton.setVisibility(View.INVISIBLE);
+        }
 
         Button checkButton = (Button) findViewById(R.id.check);
         checkButton.setOnClickListener(new View.OnClickListener() {
@@ -315,12 +323,136 @@ public class MainActivity extends AppCompatActivity {
                         logout();
                         break;
                 }
-
             }
         });
         builder.setNegativeButton("Cancel", null);
         builder.show();
 
+    }
+
+    private void showAdminDialog(){
+        final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        builder.setTitle("Admin panel");
+        builder.setNegativeButton("Back", null);
+        Context context = MainActivity.this;
+        LinearLayout layout = new LinearLayout(context);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(10, 20, 10, 20);
+
+        Button addWordButton = new Button(MainActivity.this);
+        addWordButton.setText("Add new Word");
+        addWordButton.setPadding(10, 20, 10, 20);
+        addWordButton.setOnClickListener(new View.OnClickListener(){
+
+            @Override
+            public void onClick(View v) {
+                showAdminInputDialog("addWord");
+            }
+        });
+        layout.addView(addWordButton);
+
+        Button deleteWordButton = new Button(MainActivity.this);
+        deleteWordButton.setText("Delete Word");
+        deleteWordButton.setPadding(10, 20, 10, 20);
+        deleteWordButton.setOnClickListener(new View.OnClickListener(){
+
+            @Override
+            public void onClick(View v) {
+                showAdminInputDialog("deleteWord");
+            }
+        });
+        layout.addView(deleteWordButton);
+
+        Button resetHighScoreButton = new Button(MainActivity.this);
+        resetHighScoreButton.setText("Reset HighScore");
+        resetHighScoreButton.setPadding(10, 20, 10, 20);
+        resetHighScoreButton.setOnClickListener(new View.OnClickListener(){
+
+            @Override
+            public void onClick(View v) {
+                showAdminInputDialog("resetHighScore");
+            }
+        });
+        layout.addView(resetHighScoreButton);
+
+        Button banUserButton = new Button(MainActivity.this);
+        banUserButton.setText("Ban user");
+        banUserButton.setPadding(10, 20, 10, 20);
+        banUserButton.setOnClickListener(new View.OnClickListener(){
+
+            @Override
+            public void onClick(View v) {
+                showAdminInputDialog("banUser");
+            }
+        });
+        layout.addView(banUserButton);
+
+        builder.setView(layout);
+        builder.show();
+    }
+
+    private void showAdminInputDialog(final String operation) {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        switch (operation) {
+            case "addWord":
+                builder.setTitle("Word to add:");
+                break;
+            case "deleteWord":
+                builder.setTitle("Word to Delete:");
+                break;
+            case "banUser":
+                builder.setTitle("User to ban:");
+                break;
+            case "resetHighScore":
+                builder.setTitle("User to punish:");
+                break;
+        }
+        final EditText input = new EditText(MainActivity.this);
+        input.setInputType(TYPE_CLASS_TEXT);
+        builder.setView(input);
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                if (input.getText().length() == 0) {
+                    showErrorDialog("Input field is empty!");
+                } else {
+                    switch (operation) {
+                        case "addWord":
+                            if (requestController.addWord(input.getText().toString())) {
+                                showErrorDialog("Success");
+                            } else {
+                                showErrorDialog("ERROR");
+                            }
+                            break;
+                        case "deleteWord":
+                            if (requestController.deleteWord(input.getText().toString())) {
+                                showErrorDialog("Success");
+                            } else {
+                                showErrorDialog("ERROR");
+                            }
+                            break;
+                        case "banUser":
+                            if (requestController.banUser(input.getText().toString())) {
+                                showErrorDialog("Success");
+                            } else {
+                                showErrorDialog("ERROR");
+                            }
+                            break;
+                        case "resetHighScore":
+                            if (requestController.resetHighScore(input.getText().toString())) {
+                                showErrorDialog("Success");
+                            } else {
+                                showErrorDialog("ERROR");
+                            }
+                            break;
+                    }
+                }
+            }
+
+        });
+        builder.setNegativeButton("Cancel", null);
+
+        builder.show();
     }
 
     private void showErrorDialog(String errorMessage) {

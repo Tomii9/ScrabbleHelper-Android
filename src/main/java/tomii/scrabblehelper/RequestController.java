@@ -26,9 +26,11 @@ public class RequestController {
     private HighScoreDTO ownHighScore;
     private WordDTO bestWord;
     private SessionDTO sessionDTO;
+    private String server;
 
-    public RequestController(String token) {
+    public RequestController(String token, String server) {
         this.token = token;
+        this.server = server;
     }
 
     public HighScoreDTO[] getHighScores() {
@@ -233,6 +235,96 @@ public class RequestController {
         return tempResponse;
     }
 
+    public boolean register(String username, String password) {
+        operation = "register";
+        paramNames.add("user");
+        paramNames.add("password");
+        params.add(username);
+        params.add(password);
+        try {
+            new BooleanHttpRequestTask(paramNames, params).execute().get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        boolean tempResponse = response;
+        reset();
+        return tempResponse;
+    }
+
+    public boolean deleteWord(String word) {
+        operation = "admin/deleteword";
+        paramNames.add("word");
+        paramNames.add("token");
+        params.add(word);
+        params.add(token);
+        try {
+            new BooleanHttpRequestTask(paramNames, params).execute().get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        boolean tempResponse = response;
+        reset();
+        return tempResponse;
+    }
+
+    public boolean addWord(String word) {
+        operation = "admin/banuser";
+        paramNames.add("word");
+        paramNames.add("token");
+        params.add(word);
+        params.add(token);
+        try {
+            new BooleanHttpRequestTask(paramNames, params).execute().get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        boolean tempResponse = response;
+        reset();
+        return tempResponse;
+    }
+
+    public boolean resetHighScore(String user) {
+        operation = "admin/resethighscore";
+        paramNames.add("user");
+        paramNames.add("token");
+        params.add(user);
+        params.add(token);
+        try {
+            new BooleanHttpRequestTask(paramNames, params).execute().get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        boolean tempResponse = response;
+        reset();
+        return tempResponse;
+    }
+
+    public boolean banUser(String user) {
+        operation = "admin/banuser";
+        paramNames.add("user");
+        paramNames.add("token");
+        params.add(user);
+        params.add(token);
+        try {
+            new BooleanHttpRequestTask(paramNames, params).execute().get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        boolean tempResponse = response;
+        reset();
+        return tempResponse;
+    }
+
     private void reset() {
         response = false;
         operation = new String();
@@ -246,7 +338,7 @@ public class RequestController {
         String url = new String();
 
         private BooleanHttpRequestTask(List<String> paramNames, List<String> params){
-            url = "http://midori:8080/" + operation;
+            url = "http://" + server + ":8080/" + operation;
 
             for (int i=0; i<params.size(); i++) {
                 if (i==0) {
@@ -277,7 +369,7 @@ public class RequestController {
         String url = new String();
 
         private BestWordHttpRequestTask(List<String> paramNames, List<String> params){
-            url = "http://midori:8080/" + operation;
+            url = "http://" + server + ":8080/" + operation;
 
             for (int i=0; i<params.size(); i++) {
                 if (i==0) {
@@ -309,7 +401,7 @@ public class RequestController {
         String url = new String();
 
         private Top3HttpRequestTask(List<String> paramNames, List<String> params){
-            url = "http://midori:8080/" + operation;
+            url = "http://" + server + ":8080/" + operation;
 
             for (int i=0; i<params.size(); i++) {
                 if (i==0) {
@@ -341,7 +433,7 @@ public class RequestController {
         String url = new String();
 
         private HighScoreHttpRequestTask(List<String> paramNames, List<String> params){
-            url = "http://midori:8080/" + operation;
+            url = "http://" + server + ":8080/" + operation;
 
             for (int i=0; i<params.size(); i++) {
                 if (i==0) {
@@ -372,7 +464,7 @@ public class RequestController {
         String url = new String();
 
         private AuthenticationHTttpRequestTask(List<String> paramNames, List<String> params) {
-            url = "http://midori:8080/" + operation;
+            url = "http://" + server + ":8080/" + operation;
 
             for (int i=0; i<params.size(); i++) {
                 if (i==0) {
