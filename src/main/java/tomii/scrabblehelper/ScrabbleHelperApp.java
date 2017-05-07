@@ -11,6 +11,7 @@ public class ScrabbleHelperApp extends Application {
     private boolean isAdmin;
     private char[][] board;
     private int score;
+    private String userName;
 
     @Override
     public void onCreate() {
@@ -64,5 +65,13 @@ public class ScrabbleHelperApp extends Application {
 
     public void setAdmin(boolean admin) {
         isAdmin = admin;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 }

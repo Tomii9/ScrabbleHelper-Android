@@ -249,7 +249,7 @@
             android:id="@+id/endgame"
             android:layout_width="100dp"
             android:layout_height="wrap_content"
-            android:text="EndGame"
+            android:text="End Game"
             style="@style/ButtonTextStyle"/>
 
     </LinearLayout>

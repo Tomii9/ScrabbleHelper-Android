@@ -11,6 +11,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
 public class LoginActivity extends AppCompatActivity {
 
     private RequestController requestController;
@@ -42,9 +46,12 @@ public class LoginActivity extends AppCompatActivity {
                     app.setServer(server);
                     requestController = new RequestController("dummy", server);
                     SessionDTO sessionDTO = requestController.login(userNameField.getText().toString(), passWordField.getText().toString());
-                    if (sessionDTO.getErrorMessage().equals("")) {
+                    if (sessionDTO == null) {
+                        showErrorDialog("Server could not be reached!");
+                    } else if (sessionDTO.getErrorMessage().equals("")) {
                         token = sessionDTO.getToken();
                         app.setToken(token);
+                        app.setUserName(userNameField.getText().toString());
                         if (sessionDTO.getType().equals("admin")) {
                             app.setAdmin(true);
                         } else {
@@ -58,6 +65,7 @@ public class LoginActivity extends AppCompatActivity {
                     } else {
                         showErrorDialog(sessionDTO.getErrorMessage());
                     }
+
                 }
             }
         });
@@ -97,7 +105,7 @@ public class LoginActivity extends AppCompatActivity {
         passWordField.setHint("password");
         layout.addView(passWordField);
 
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+        builder.setPositiveButton("Register", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 String username = userNameField.getText().toString();

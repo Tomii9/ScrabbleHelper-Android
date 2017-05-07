@@ -45,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
     private HighScoreDTO [] topScores;
     private RequestController requestController;
     private boolean isAdmin;
+    private String userName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +63,7 @@ public class MainActivity extends AppCompatActivity {
         hand = ((ScrabbleHelperApp) MainActivity.this.getApplication()).getHand();
         score = ((ScrabbleHelperApp) MainActivity.this.getApplication()).getScore();
         isAdmin = ((ScrabbleHelperApp) MainActivity.this.getApplication()).isAdmin();
+        userName = ((ScrabbleHelperApp) MainActivity.this.getApplication()).getUserName();
         setScore(score);
         firstTurn = board[7][7] == EMPTY;
         handimages = new ArrayList<>();
@@ -196,8 +198,8 @@ public class MainActivity extends AppCompatActivity {
         final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
         builder.setTitle("High Scores");
         String message = new String();
-        for (int i=0; i<3; i++) {
-            if (highScores[i].getUser().equals("Admin")) {
+        for (int i=0; i<highScores.length && i<3; i++) {
+            if (highScores[i].getUser().equals(userName)) {
                 message = message.concat("=> ");
             }
             message = message.concat(i + 1 + ". " + highScores[i].getUser() + " - " + highScores[i].getHighscore() + " - " + highScores[i].getDate() + "\n");
@@ -229,14 +231,17 @@ public class MainActivity extends AppCompatActivity {
                 Pattern pattern = Pattern.compile("[a-zA-Z]*");
                 Matcher matcher = pattern.matcher(word.getText().toString());
                 if (!matcher.matches()) {
-                    showErrorDialog("This contains illegal characters!");
+                    showErrorDialog("This word contains illegal characters!");
+                    dialog.cancel();
+                } else if (word.getText().length() == 0) {
+                    showErrorDialog("You didn't enter any word!");
                     dialog.cancel();
                 } else {
                     httpParam = word.getText().toString();
                     if (requestController.checkLegitimacy(httpParam)) {
-                        showErrorDialog("YES");
+                        showErrorDialog(word.getText().toString() + " is a legit word");
                     } else {
-                        showErrorDialog("NO");
+                        showErrorDialog("Cannot find " + word.getText().toString() +" in the dictionary");
                     }
                 }
             }
@@ -248,7 +253,6 @@ public class MainActivity extends AppCompatActivity {
     private void showDrawDialog() {
         final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
         builder.setTitle("What did you draw?");
-
         final EditText drawnletters = new EditText(MainActivity.this);
         drawnletters.setInputType(TYPE_CLASS_TEXT);
         drawnletters.setFilters(new InputFilter[]{new InputFilter.LengthFilter(7 - hand.size())});
@@ -261,8 +265,10 @@ public class MainActivity extends AppCompatActivity {
                 if (!matcher.matches()) {
                     showErrorDialog("This contains illegal characters!");
                     dialog.cancel();
-                } else {
-                    parseHand(drawnletters.getText().toString());
+                } else if ((drawnletters.getText().toString().length() - drawnletters.getText().toString().replaceAll("\\.", "").length()) > 2) {
+                    showErrorDialog("It is impossible to draw more than 2 jokers!");
+                }  else {
+                    parseHand(drawnletters.getText().toString().toLowerCase());
                     refreshHand();
                 }
             }
@@ -286,15 +292,16 @@ public class MainActivity extends AppCompatActivity {
                 Pattern pattern = Pattern.compile("[a-zA-Z]*");
                 Matcher matcher = pattern.matcher(input.getText().toString());
                 if (input.length()!=length) {
-                    showErrorDialog("This word is too short");
+                    showErrorDialog("This word is too short!");
                     dialog.cancel();
                 } else if (!matcher.matches()) {
                     showErrorDialog("This word contains illegal characters!");
                 } else {
-                    if (requestController.placeWord(new WordDTO(input.getText().toString(), x, y, across, 0))) {
-                        placeWord(input.getText().toString(), x, y, across, false);
+                    if (requestController.checkLegitimacy(input.getText().toString().toLowerCase())) {
+                        placeWord(input.getText().toString().toLowerCase(), x, y, across, false);
+                        requestController.placeWord(new WordDTO(input.getText().toString().toLowerCase(), x, y, across, 0));
                     } else {
-                        showErrorDialog("Not a legit word!");
+                        showIllegitPlacementDialog(input.getText().toString().toLowerCase(), x, y, across);
                     }
                 }
 
@@ -303,6 +310,20 @@ public class MainActivity extends AppCompatActivity {
         builder.setNegativeButton("Cancel", null);
         builder.show();
 
+    }
+
+    private void showIllegitPlacementDialog(final String word, final int x, final int y, final boolean across) {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        builder.setTitle(word + " is not in the database. Will you still accept it?");
+        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                placeWord(word, x, y, across, false);
+                requestController.placeWord(new WordDTO(word, x, y, across, 0));
+            }
+        });
+        builder.setNegativeButton("NO", null);
+        builder.show();
     }
 
     private void showConfirmationDialog(String message, final String action) {
@@ -421,28 +442,28 @@ public class MainActivity extends AppCompatActivity {
                             if (requestController.addWord(input.getText().toString())) {
                                 showErrorDialog("Success");
                             } else {
-                                showErrorDialog("ERROR");
+                                showErrorDialog("Database error! The word probably already exist.");
                             }
                             break;
                         case "deleteWord":
                             if (requestController.deleteWord(input.getText().toString())) {
                                 showErrorDialog("Success");
                             } else {
-                                showErrorDialog("ERROR");
+                                showErrorDialog("Database Error!");
                             }
                             break;
                         case "banUser":
                             if (requestController.banUser(input.getText().toString())) {
                                 showErrorDialog("Success");
                             } else {
-                                showErrorDialog("ERROR");
+                                showErrorDialog("Database Error!");
                             }
                             break;
                         case "resetHighScore":
                             if (requestController.resetHighScore(input.getText().toString())) {
                                 showErrorDialog("Success");
                             } else {
-                                showErrorDialog("ERROR");
+                                showErrorDialog("Database Error! The user probably doesn't exist.");
                             }
                             break;
                     }
@@ -657,7 +678,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void parseHand(String handString) {
         for (int i=0; i<handString.length(); i++) {
-            System.out.println(handString.charAt(i));
             hand.add(handString.charAt(i));
             if (handString.charAt(i) == '.') {
                 handimages.get(i).setImageResource(getResources().getIdentifier("joker", "drawable", getPackageName()));
@@ -719,33 +739,6 @@ public class MainActivity extends AppCompatActivity {
                 boardImages[i][j].setBackgroundResource(getResources().getIdentifier(bonuses[i][j], "drawable", getPackageName()));
             }
         }
-    }
-
-    private class HttpRequestTask extends AsyncTask<Void, Void, Boolean> {
-
-        @Override
-        protected Boolean doInBackground(Void... params) {
-            try {
-                final String url = "http://192.168.43.123:8080/checklegitimacy?word=" + httpParam;
-                RestTemplate restTemplate = new RestTemplate();
-                restTemplate.getMessageConverters().add(new StringHttpMessageConverter());
-                String exists = restTemplate.getForObject(url, String.class);
-                return exists.equals("true");
-            } catch (Exception e) {
-                Log.e("MainActivity", e.getMessage(), e);
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Boolean exists) {
-            if (exists) {
-
-            } else {
-                showErrorDialog("NO");
-            }
-        }
-
     }
 
 }

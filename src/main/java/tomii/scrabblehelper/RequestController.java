@@ -157,25 +157,23 @@ public class RequestController {
     }
 
     public boolean placeWord(WordDTO word) {
-        if (checkLegitimacy(word.getWord())) {
-            operation = "placeword";
-            paramNames.add("word");
-            paramNames.add("x");
-            paramNames.add("y");
-            paramNames.add("down");
-            paramNames.add("token");
-            params.add(token);
-            params.add(word.getWord());
-            params.add(String.valueOf(word.getX()));
-            params.add(String.valueOf(word.getY()));
-            params.add(String.valueOf(!word.isDown()));
-            try {
-                new BooleanHttpRequestTask(paramNames, params).execute().get();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            }
+        operation = "placeword";
+        paramNames.add("word");
+        paramNames.add("x");
+        paramNames.add("y");
+        paramNames.add("down");
+        paramNames.add("token");
+        params.add(word.getWord());
+        params.add(String.valueOf(word.getX()));
+        params.add(String.valueOf(word.getY()));
+        params.add(String.valueOf(!word.isDown()));
+        params.add(token);
+        try {
+            new BooleanHttpRequestTask(paramNames, params).execute().get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
         }
 
         boolean tempResponse = response;
@@ -313,6 +311,20 @@ public class RequestController {
         paramNames.add("token");
         params.add(user);
         params.add(token);
+        try {
+            new BooleanHttpRequestTask(paramNames, params).execute().get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        boolean tempResponse = response;
+        reset();
+        return tempResponse;
+    }
+
+    public boolean checkServerStatus() {
+        operation = "status";
         try {
             new BooleanHttpRequestTask(paramNames, params).execute().get();
         } catch (InterruptedException e) {
