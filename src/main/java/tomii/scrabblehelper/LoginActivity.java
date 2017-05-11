@@ -19,6 +19,9 @@ public class LoginActivity extends AppCompatActivity {
 
     private RequestController requestController;
     private String token;
+    EditText serverField;
+    EditText userNameField;
+    EditText passWordField;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,9 +34,9 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                EditText serverField = (EditText) findViewById(R.id.server);
-                EditText userNameField = (EditText)findViewById(R.id.username);
-                EditText passWordField = (EditText)findViewById(R.id.password);
+                serverField = (EditText) findViewById(R.id.server);
+                userNameField = (EditText)findViewById(R.id.username);
+                passWordField = (EditText)findViewById(R.id.password);
 
                 if (serverField.getText().length() == 0) {
                     showErrorDialog("Server is empty!");
@@ -97,19 +100,27 @@ public class LoginActivity extends AppCompatActivity {
         LinearLayout layout = new LinearLayout(context);
         layout.setOrientation(LinearLayout.VERTICAL);
 
-        final EditText userNameField = new EditText(context);
-        userNameField.setHint("username");
-        layout.addView(userNameField);
+        final EditText registerServerField = new EditText(context);
+        registerServerField.setHint("server");
+        layout.addView(registerServerField);
 
-        final EditText passWordField = new EditText(context);
-        passWordField.setHint("password");
-        layout.addView(passWordField);
+        final EditText registerUserNameField = new EditText(context);
+        registerUserNameField.setHint("username");
+        layout.addView(registerUserNameField);
+
+        final EditText registerPassWordField = new EditText(context);
+        registerPassWordField.setHint("password");
+        layout.addView(registerPassWordField);
 
         builder.setPositiveButton("Register", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                String username = userNameField.getText().toString();
-                String password = passWordField.getText().toString();
+                final ScrabbleHelperApp app = (ScrabbleHelperApp) getApplicationContext();
+                String server = registerServerField.getText().toString();
+                app.setServer(server);
+                requestController = new RequestController("dummy", server);
+                String username = registerUserNameField.getText().toString();
+                String password = registerPassWordField.getText().toString();
 
                 if (username.length() == 0) {
                     showErrorDialog("UserName is empty!");
@@ -117,6 +128,12 @@ public class LoginActivity extends AppCompatActivity {
                     showErrorDialog("Password is empty!");
                 } else {
                     if (requestController.register(username, password)) {
+                        serverField = (EditText) findViewById(R.id.server);
+                        userNameField = (EditText)findViewById(R.id.username);
+                        passWordField = (EditText)findViewById(R.id.password);
+                        serverField.setText(server);
+                        userNameField.setText(username);
+                        passWordField.setText(password);
                         showErrorDialog("Success! Now you can log in");
                     } else {
                         showErrorDialog("Error! User already exists!");

@@ -3,14 +3,12 @@ package tomii.scrabblehelper;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayout;
 import android.text.InputFilter;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,8 +18,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import org.springframework.http.converter.StringHttpMessageConverter;
-import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -87,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (hand.size()==0) {
-                    showErrorDialog("Your hand is empty!");
+                    showMessageDialog("Your hand is empty!");
                 } else if (hand.size()<7) {
                     showConfirmationDialog("Your hand isn't full. Are you unable to draw letters?", "nonFullHand");
                 } else {
@@ -162,7 +158,7 @@ public class MainActivity extends AppCompatActivity {
         }
         WordDTO wordDTO =requestController.getBestWord(handString);
         if (wordDTO.getWord() == null) {
-            showErrorDialog("Cannot find any word, pass the play and shuffle your hand!");
+            showMessageDialog("Cannot find any word, pass the play and shuffle your hand!");
         } else {
             placeWord(wordDTO.getWord(), wordDTO.getX(), wordDTO.getY(), wordDTO.isDown(), true);
             highlightRecentlyPlacedWord(wordDTO);
@@ -175,9 +171,9 @@ public class MainActivity extends AppCompatActivity {
         clearSelectionsOnBoard();
         if (requestController.getOwnHighScore().getHighscore() < score) {
             requestController.setHighScore(score);
-            showErrorDialog("New High Score: " + score);
+            showMessageDialog("New High Score: " + score);
         } else {
-            showErrorDialog("Final Score: " + score);
+            showMessageDialog("Final Score: " + score);
         }
         hand.clear();
         refreshHand();
@@ -231,17 +227,17 @@ public class MainActivity extends AppCompatActivity {
                 Pattern pattern = Pattern.compile("[a-zA-Z]*");
                 Matcher matcher = pattern.matcher(word.getText().toString());
                 if (!matcher.matches()) {
-                    showErrorDialog("This word contains illegal characters!");
+                    showMessageDialog("This word contains illegal characters!");
                     dialog.cancel();
                 } else if (word.getText().length() == 0) {
-                    showErrorDialog("You didn't enter any word!");
+                    showMessageDialog("You didn't enter any word!");
                     dialog.cancel();
                 } else {
                     httpParam = word.getText().toString();
                     if (requestController.checkLegitimacy(httpParam)) {
-                        showErrorDialog(word.getText().toString() + " is a legit word");
+                        showMessageDialog(word.getText().toString() + " is a legit word");
                     } else {
-                        showErrorDialog("Cannot find " + word.getText().toString() +" in the dictionary");
+                        showMessageDialog("Cannot find " + word.getText().toString() +" in the dictionary");
                     }
                 }
             }
@@ -263,10 +259,10 @@ public class MainActivity extends AppCompatActivity {
                 Pattern pattern = Pattern.compile("[a-zA-Z_.]*");
                 Matcher matcher = pattern.matcher(drawnletters.getText().toString());
                 if (!matcher.matches()) {
-                    showErrorDialog("This contains illegal characters!");
+                    showMessageDialog("This contains illegal characters!");
                     dialog.cancel();
                 } else if ((drawnletters.getText().toString().length() - drawnletters.getText().toString().replaceAll("\\.", "").length()) > 2) {
-                    showErrorDialog("It is impossible to draw more than 2 jokers!");
+                    showMessageDialog("It is impossible to draw more than 2 jokers!");
                 }  else {
                     parseHand(drawnletters.getText().toString().toLowerCase());
                     refreshHand();
@@ -292,10 +288,10 @@ public class MainActivity extends AppCompatActivity {
                 Pattern pattern = Pattern.compile("[a-zA-Z]*");
                 Matcher matcher = pattern.matcher(input.getText().toString());
                 if (input.length()!=length) {
-                    showErrorDialog("This word is too short!");
+                    showMessageDialog("This word is too short!");
                     dialog.cancel();
                 } else if (!matcher.matches()) {
-                    showErrorDialog("This word contains illegal characters!");
+                    showMessageDialog("This word contains illegal characters!");
                 } else {
                     if (requestController.checkLegitimacy(input.getText().toString().toLowerCase())) {
                         placeWord(input.getText().toString().toLowerCase(), x, y, across, false);
@@ -435,35 +431,35 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 if (input.getText().length() == 0) {
-                    showErrorDialog("Input field is empty!");
+                    showMessageDialog("Input field is empty!");
                 } else {
                     switch (operation) {
                         case "addWord":
                             if (requestController.addWord(input.getText().toString())) {
-                                showErrorDialog("Success");
+                                showMessageDialog("Success");
                             } else {
-                                showErrorDialog("Database error! The word probably already exist.");
+                                showMessageDialog("Database error! The word probably already exist.");
                             }
                             break;
                         case "deleteWord":
                             if (requestController.deleteWord(input.getText().toString())) {
-                                showErrorDialog("Success");
+                                showMessageDialog("Success");
                             } else {
-                                showErrorDialog("Database Error!");
+                                showMessageDialog("Database Error!");
                             }
                             break;
                         case "banUser":
                             if (requestController.banUser(input.getText().toString())) {
-                                showErrorDialog("Success");
+                                showMessageDialog("Success");
                             } else {
-                                showErrorDialog("Database Error!");
+                                showMessageDialog("Database Error!");
                             }
                             break;
                         case "resetHighScore":
                             if (requestController.resetHighScore(input.getText().toString())) {
-                                showErrorDialog("Success");
+                                showMessageDialog("Success");
                             } else {
-                                showErrorDialog("Database Error! The user probably doesn't exist.");
+                                showMessageDialog("Database Error! The user probably doesn't exist.");
                             }
                             break;
                     }
@@ -476,7 +472,7 @@ public class MainActivity extends AppCompatActivity {
         builder.show();
     }
 
-    private void showErrorDialog(String errorMessage) {
+    private void showMessageDialog(String errorMessage) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
         builder.setTitle(errorMessage);
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
@@ -503,7 +499,7 @@ public class MainActivity extends AppCompatActivity {
                             board[x + k][y] = boardSave[k];
                         }
                     }
-                    showErrorDialog("Illegal move: OverWriting letter already on board!");
+                    showMessageDialog("Illegal move: OverWriting letter already on board!");
                     break;
                 }
                 if (ownPlacement) {
@@ -529,7 +525,7 @@ public class MainActivity extends AppCompatActivity {
                             board[x][y + k] = boardSave[k];
                         }
                     }
-                    showErrorDialog("Illegal move: OverWriting letter already on board!");
+                    showMessageDialog("Illegal move: OverWriting letter already on board!");
                     break;
                 }
                 if (ownPlacement) {
@@ -617,19 +613,29 @@ public class MainActivity extends AppCompatActivity {
                 if (firstTurn && coord[1]>=7 && y <=7 && x==7) {
                     legalMove = true;
                 }
+                int lettercount = 0;
                 for (int i = y; i <= coord[1]; i++) {
                     boardImages[x][i].setBackgroundResource(R.drawable.box_selected);
                     if ((board[x][i] != EMPTY || checkAdjacentTiles(x, i)) && !firstTurn) {
                         legalMove = true;
                     }
+                    if (board[x][i] == EMPTY) {
+                        lettercount++;
+                    }
+                }
+                if (lettercount>8) {
+                    legalMove = false;
                 }
                 if (legalMove && showDialog) {
                     showInputDialog(Math.abs(coord[1] - y) + 1, x, y, true);
-                }else if (firstTurn && showDialog){
-                    showErrorDialog("It is the first turn, you have to use the middle tile!");
+                } else if (lettercount>7) {
+                    showMessageDialog("Impossible placement! Too many letters used!");
+                    clearSelectionsOnBoard();
+                } else if (firstTurn && showDialog){
+                    showMessageDialog("It is the first turn, you have to use the middle tile!");
                     clearSelectionsOnBoard();
                 } else if (showDialog){
-                    showErrorDialog("Illegal move: Doesn't connect to any letter on the board!");
+                    showMessageDialog("Illegal move: Doesn't connect to any letter on the board!");
                     clearSelectionsOnBoard();
                 }
             }
@@ -643,19 +649,29 @@ public class MainActivity extends AppCompatActivity {
                 if (firstTurn && coord[0]>=7 && x <=7  && y==7) {
                     legalMove = true;
                 }
+                int lettercount = 0;
                 for (int i = x; i <= coord[0]; i++) {
                     boardImages[i][y].setBackgroundResource(R.drawable.box_selected);
                     if ((board[i][y] != EMPTY || checkAdjacentTiles(i, y)) && !firstTurn) {
                         legalMove = true;
                     }
+                    if (board[i][y] == EMPTY) {
+                        lettercount++;
+                    }
+                }
+                if (lettercount>7) {
+                    legalMove = false;
                 }
                 if (legalMove && showDialog) {
                     showInputDialog(Math.abs(coord[0] - x) + 1, x, y, false);
+                } else if (lettercount>7) {
+                    showMessageDialog("Impossible placement! Too many letters used!");
+                    clearSelectionsOnBoard();
                 } else if (firstTurn && showDialog){
-                    showErrorDialog("It is the first turn, you have to use the middle tile!");
+                    showMessageDialog("It is the first turn, you have to use the middle tile!");
                     clearSelectionsOnBoard();
                 } else if (showDialog){
-                    showErrorDialog("Illegal move: Doesn't connect to any letter on the board!");
+                    showMessageDialog("Illegal move: Doesn't connect to any letter on the board!");
                     clearSelectionsOnBoard();
                 }
             }
