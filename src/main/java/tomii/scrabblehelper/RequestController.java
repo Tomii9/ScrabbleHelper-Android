@@ -39,10 +39,9 @@ public class RequestController {
         params.add(token);
         try {
             new Top3HttpRequestTask(paramNames, params).execute().get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            Log.e("RequestController", e.getMessage(), e);
+            return null;
         }
 
         for (int i=0; i<highScores.length; i++) {
@@ -58,10 +57,9 @@ public class RequestController {
         params.add(token);
         try {
             new HighScoreHttpRequestTask(paramNames, params).execute().get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            Log.e("RequestController", e.getMessage(), e);
+            return null;
         }
         reset();
         return ownHighScore;
@@ -76,10 +74,9 @@ public class RequestController {
         params.add(token);
         try {
             new BooleanHttpRequestTask(paramNames, params).execute().get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            Log.e("RequestController", e.getMessage(), e);
+            return false;
         }
 
         boolean tempResponse = response;
@@ -94,10 +91,9 @@ public class RequestController {
         params.add(token);
         try {
             new BestWordHttpRequestTask(paramNames, params).execute().get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            Log.e("RequestController", e.getMessage(), e);
+            return null;
         }
         System.out.println(bestWord.getWord());
         bestWord.setDown(!bestWord.isDown());
@@ -112,10 +108,9 @@ public class RequestController {
         params.add(token);
         try {
             new BooleanHttpRequestTask(paramNames, params).execute().get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            Log.e("RequestController", e.getMessage(), e);
+            return false;
         }
         boolean tempResponse = response;
         reset();
@@ -128,10 +123,9 @@ public class RequestController {
         params.add(token);
         try {
             new BooleanHttpRequestTask(paramNames, params).execute().get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            Log.e("RequestController", e.getMessage(), e);
+            return false;
         }
         boolean tempResponse = response;
         reset();
@@ -146,10 +140,9 @@ public class RequestController {
         params.add(token);
         try {
             new BooleanHttpRequestTask(paramNames, params).execute().get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            Log.e("RequestController", e.getMessage(), e);
+            return false;
         }
         boolean tempResponse = response;
         reset();
@@ -170,10 +163,9 @@ public class RequestController {
         params.add(token);
         try {
             new BooleanHttpRequestTask(paramNames, params).execute().get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            Log.e("RequestController", e.getMessage(), e);
+            return false;
         }
 
         boolean tempResponse = response;
@@ -190,10 +182,9 @@ public class RequestController {
         params.add(token);
         try {
             new BooleanHttpRequestTask(paramNames, params).execute().get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            Log.e("RequestController", e.getMessage(), e);
+            return false;
         }
         boolean tempResponse = response;
         reset();
@@ -208,10 +199,9 @@ public class RequestController {
         params.add(password);
         try {
             new AuthenticationHTttpRequestTask(paramNames, params).execute().get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            Log.e("RequestController", e.getMessage(), e);
+            return null;
         }
         reset();
         return sessionDTO;
@@ -223,10 +213,9 @@ public class RequestController {
         params.add(token);
         try {
             new BooleanHttpRequestTask(paramNames, params).execute().get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            Log.e("RequestController", e.getMessage(), e);
+            return false;
         }
         boolean tempResponse = response;
         reset();
@@ -241,10 +230,9 @@ public class RequestController {
         params.add(password);
         try {
             new BooleanHttpRequestTask(paramNames, params).execute().get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            Log.e("RequestController", e.getMessage(), e);
+            return false;
         }
         boolean tempResponse = response;
         reset();
@@ -259,10 +247,9 @@ public class RequestController {
         params.add(token);
         try {
             new BooleanHttpRequestTask(paramNames, params).execute().get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            Log.e("RequestController", e.getMessage(), e);
+            return false;
         }
         boolean tempResponse = response;
         reset();
@@ -277,10 +264,9 @@ public class RequestController {
         params.add(token);
         try {
             new BooleanHttpRequestTask(paramNames, params).execute().get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            Log.e("RequestController", e.getMessage(), e);
+            return false;
         }
         boolean tempResponse = response;
         reset();
@@ -295,10 +281,9 @@ public class RequestController {
         params.add(token);
         try {
             new BooleanHttpRequestTask(paramNames, params).execute().get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            Log.e("RequestController", e.getMessage(), e);
+            return false;
         }
         boolean tempResponse = response;
         reset();
@@ -313,10 +298,9 @@ public class RequestController {
         params.add(token);
         try {
             new BooleanHttpRequestTask(paramNames, params).execute().get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            Log.e("RequestController", e.getMessage(), e);
+            return false;
         }
         boolean tempResponse = response;
         reset();
@@ -327,10 +311,9 @@ public class RequestController {
         operation = "status";
         try {
             new BooleanHttpRequestTask(paramNames, params).execute().get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            Log.e("RequestController", e.getMessage(), e);
+            return false;
         }
         boolean tempResponse = response;
         reset();
@@ -369,7 +352,7 @@ public class RequestController {
                 String exists = restTemplate.getForObject(url, String.class);
                 response = exists.equals("true");
             } catch (Exception e) {
-                Log.e("RequestController", e.getMessage(), e);
+                    Log.e("RequestController", e.getMessage(), e);
             }
             return null;
         }
