@@ -249,22 +249,22 @@ public class MainActivity extends AppCompatActivity {
     private void showDrawDialog() {
         final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
         builder.setTitle("What did you draw?");
-        final EditText drawnletters = new EditText(MainActivity.this);
-        drawnletters.setInputType(TYPE_CLASS_TEXT);
-        drawnletters.setFilters(new InputFilter[]{new InputFilter.LengthFilter(7 - hand.size())});
-        builder.setView(drawnletters);
+        final EditText drawnLetters = new EditText(MainActivity.this);
+        drawnLetters.setInputType(TYPE_CLASS_TEXT);
+        drawnLetters.setFilters(new InputFilter[]{new InputFilter.LengthFilter(7 - hand.size())});
+        builder.setView(drawnLetters);
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 Pattern pattern = Pattern.compile("[a-zA-Z_.]*");
-                Matcher matcher = pattern.matcher(drawnletters.getText().toString());
+                Matcher matcher = pattern.matcher(drawnLetters.getText().toString());
                 if (!matcher.matches()) {
                     showMessageDialog("This contains illegal characters!");
                     dialog.cancel();
-                } else if ((drawnletters.getText().toString().length() - drawnletters.getText().toString().replaceAll("\\.", "").length()) > 2) {
+                } else if ((drawnLetters.getText().toString().length() - drawnLetters.getText().toString().replaceAll("\\.", "").length()) > 2) {
                     showMessageDialog("It is impossible to draw more than 2 jokers!");
                 }  else {
-                    parseHand(drawnletters.getText().toString().toLowerCase());
+                    parseHand(drawnLetters.getText().toString().toLowerCase());
                     refreshHand();
                 }
             }
@@ -276,7 +276,7 @@ public class MainActivity extends AppCompatActivity {
     private void showInputDialog(final int length, final int x, final int y, final boolean across) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
 
-        builder.setTitle("Word to place on board:");
+        builder.setTitle("Word to place on board (" + length + "):");
 
         final EditText input = new EditText(MainActivity.this);
         input.setInputType(TYPE_CLASS_TEXT);
@@ -297,7 +297,7 @@ public class MainActivity extends AppCompatActivity {
                         placeWord(input.getText().toString().toLowerCase(), x, y, across, false);
                         requestController.placeWord(new WordDTO(input.getText().toString().toLowerCase(), x, y, across, 0));
                     } else {
-                        showIllegitPlacementDialog(input.getText().toString().toLowerCase(), x, y, across);
+                        showIlLegitPlacementDialog(input.getText().toString().toLowerCase(), x, y, across);
                     }
                 }
 
@@ -308,7 +308,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void showIllegitPlacementDialog(final String word, final int x, final int y, final boolean across) {
+    private void showIlLegitPlacementDialog(final String word, final int x, final int y, final boolean across) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
         builder.setTitle(word + " is not in the database. Will you still accept it?");
         builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
