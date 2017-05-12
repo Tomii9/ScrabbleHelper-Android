@@ -139,7 +139,7 @@ public class LoginActivity extends AppCompatActivity {
                         passWordField.setText(password);
                         showErrorDialog("Success! Now you can log in");
                     } else {
-                        showErrorDialog("Error! User already exists!");
+                        showErrorDialog("Error! User already exists, or server could not be reached!");
                     }
 
                 }
@@ -149,6 +149,22 @@ public class LoginActivity extends AppCompatActivity {
         builder.setNegativeButton("Cancel", null);
 
         builder.setView(layout);
+        builder.show();
+    }
+
+    @Override
+    public void onBackPressed() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setTitle("Quitting ScrabbleHelper")
+                .setMessage("Are you sure you want to exit ScrabbleHelper?")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        finish();
+                    }
+                })
+                .setNegativeButton("No", null);
         builder.show();
     }
 }

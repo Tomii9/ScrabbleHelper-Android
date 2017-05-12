@@ -20,6 +20,7 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -54,10 +55,10 @@ public class MainActivity extends AppCompatActivity {
         requestController = new RequestController(token, server);
         firstSelection = true;
         coord = new int[2];
-        board = ((ScrabbleHelperApp) MainActivity.this.getApplication()).getBoard();
+        board = new char[15][15];
         boardImages = new ImageView[15][15];
-        hand = ((ScrabbleHelperApp) MainActivity.this.getApplication()).getHand();
-        score = ((ScrabbleHelperApp) MainActivity.this.getApplication()).getScore();
+        hand = new Vector<Character>();
+        score = 0;
         isAdmin = ((ScrabbleHelperApp) MainActivity.this.getApplication()).isAdmin();
         userName = ((ScrabbleHelperApp) MainActivity.this.getApplication()).getUserName();
         setScore(score);
@@ -438,7 +439,7 @@ public class MainActivity extends AppCompatActivity {
                             if (requestController.addWord(input.getText().toString())) {
                                 showMessageDialog("Success");
                             } else {
-                                showMessageDialog("Database error! The word probably already exist.");
+                                showMessageDialog("Database error! The word probably already exists.");
                             }
                             break;
                         case "deleteWord":
@@ -756,5 +757,19 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-
+    @Override
+    public void onBackPressed() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setTitle("Quitting ScrabbleHelper")
+                .setMessage("Are you sure you want to exit ScrabbleHelper?")
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        finish();
+                    }
+                })
+                .setNegativeButton("No", null);
+        builder.show();
+    }
 }

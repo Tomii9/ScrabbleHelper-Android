@@ -257,7 +257,7 @@ public class RequestController {
     }
 
     public boolean addWord(String word) {
-        operation = "admin/banuser";
+        operation = "admin/addword";
         paramNames.add("word");
         paramNames.add("token");
         params.add(word);
