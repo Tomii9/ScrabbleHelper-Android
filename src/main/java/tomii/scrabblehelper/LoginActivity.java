@@ -124,8 +124,9 @@ public class LoginActivity extends AppCompatActivity {
                 requestController = new RequestController("dummy", server);
                 String username = registerUserNameField.getText().toString();
                 String password = registerPassWordField.getText().toString();
-
-                if (username.length() == 0) {
+                if (server.length() == 0) {
+                    showErrorDialog("Server is empty!");
+                } else if (username.length() == 0) {
                     showErrorDialog("UserName is empty!");
                 } else if (password.length() == 0) {
                     showErrorDialog("Password is empty!");
