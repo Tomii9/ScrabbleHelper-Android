@@ -71,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
 
         setupBoard();
 
+        //Define Buttons
         Button logoutButton = (Button) findViewById(R.id.logout);
         logoutButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -146,6 +147,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    //define methods of buttons
     private void logout() {
         requestController.logout();
         Intent intent = new Intent(MainActivity.this, LoginActivity.class);
@@ -191,6 +193,248 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void placeWord(String word, int x, int y, boolean across, boolean ownPlacement) {
+
+        char[] boardSave = new char[word.length()];
+        if (!across) {
+            for (int i = 0; i < word.length(); i++) {
+                if (isOverWrite(x + i, y, word.charAt(i))) {
+                    for (int k = 0; k < i; k++) {
+                        if (boardSave[k] == EMPTY) {
+                            boardImages[x + k][y].setImageResource(android.R.color.transparent);
+                            board[x + k][y] = EMPTY;
+                        } else {
+                            boardImages[x + k][y].setImageResource(getResources().getIdentifier(Character.toString(boardSave[k]), "drawable", getPackageName()));
+                            board[x + k][y] = boardSave[k];
+                        }
+                    }
+                    showMessageDialog("Illegal move: OverWriting letter already on board!");
+                    break;
+                }
+                if (ownPlacement) {
+                    if (!hand.contains(new Character(word.charAt(i)))) {
+                        hand.remove(new Character('.'));
+                    } else {
+                        hand.remove(new Character(word.charAt(i)));
+                    }
+                }
+                boardSave[i] = board[x + i][y];
+                board[x + i][y] = word.charAt(i);
+                boardImages[x + i][y].setImageResource(getResources().getIdentifier(Character.toString(word.charAt(i)), "drawable", getPackageName()));
+            }
+        } else {
+            for (int i = 0; i < word.length(); i++) {
+                if (isOverWrite(x, y + i, word.charAt(i))) {
+                    for (int k = 0; k < i; k++) {
+                        if (boardSave[k] == EMPTY) {
+                            boardImages[x][y + k].setImageResource(android.R.color.transparent);
+                            board[x][y + k] = EMPTY;
+                        } else {
+                            boardImages[x][y + k].setImageResource(getResources().getIdentifier(Character.toString(boardSave[k]), "drawable", getPackageName()));
+                            board[x][y + k] = boardSave[k];
+                        }
+                    }
+                    showMessageDialog("Illegal move: OverWriting letter already on board!");
+                    break;
+                }
+                if (ownPlacement) {
+                    if (!hand.contains(new Character(word.charAt(i)))) {
+                        hand.remove(new Character('.'));
+                    } else {
+                        hand.remove(new Character(word.charAt(i)));
+                    }
+                }
+                boardSave[i] = board[x][y + i];
+                board[x][y + i] = word.charAt(i);
+                boardImages[x][y + i].setImageResource(getResources().getIdentifier(Character.toString(word.charAt(i)), "drawable", getPackageName()));
+            }
+        }
+        firstTurn = false;
+        refreshHand();
+    }
+
+    private boolean isOverWrite(int x, int y, char c) {
+        char ch = board[x][y];
+        return ch != EMPTY && ch != c;
+    }
+
+    private void setupBoard(){
+        boardImages = new ImageView[15][15];
+        android.widget.GridLayout boardLayout = (android.widget.GridLayout) findViewById(R.id.board);
+        int tilePadding = dpToPixel(3);
+        int tileSize = dpToPixel(20);
+        for (int i=0; i<15; i++) {
+            for (int j = 0; j < 15; j++) {
+                ImageView tile = new ImageView(this);
+                tile.setLayoutParams(new GridLayout.LayoutParams(new ViewGroup.LayoutParams(tileSize, tileSize)));
+                tile.setAdjustViewBounds(true);
+                tile.setScaleType(ImageView.ScaleType.FIT_XY);
+                tile.setPadding(tilePadding, tilePadding, tilePadding, tilePadding);;
+                final int x = i;
+                final int y = j;
+                tile.setOnTouchListener(new View.OnTouchListener() {
+                    @Override
+                    public boolean onTouch(View v, MotionEvent event) {
+
+                        selectTile(x, y, true);
+
+                        return false;
+                    }
+                });
+                if (board[i][j] != EMPTY) {
+                    tile.setImageResource(getResources().getIdentifier(Character.toString(board[i][j]), "drawable", getPackageName()));
+                } else {
+                    tile.setImageResource(android.R.color.transparent);
+                }
+                boardImages[i][j] = tile;
+                boardLayout.addView(tile);
+            }
+        }
+        drawBonusFields();
+    }
+
+    //first selection: red, second selection: yellow
+    private void selectTile(int x, int y, boolean showDialog) {
+        boolean legalMove = false;
+        if (firstSelection) {
+            clearSelectionsOnBoard();
+            coord[0]=x;
+            coord[1]=y;
+            firstSelection=false;
+            boardImages[x][y].setBackgroundResource(R.drawable.box_preselected);
+        } else {
+            if (coord[0]==x && coord[1]!=y) {
+                firstSelection=true;
+                if (coord[1] < y) {
+                    int temp = y;
+                    y = coord[1];
+                    coord[1] = temp;
+                }
+                if (firstTurn && coord[1]>=7 && y <=7 && x==7) {
+                    legalMove = true;
+                }
+                int lettercount = 0;
+                for (int i = y; i <= coord[1]; i++) {
+                    boardImages[x][i].setBackgroundResource(R.drawable.box_selected);
+                    if ((board[x][i] != EMPTY || checkAdjacentTiles(x, i)) && !firstTurn) {
+                        legalMove = true;
+                    }
+                    if (board[x][i] == EMPTY) {
+                        lettercount++;
+                    }
+                }
+                if (lettercount>8) {
+                    legalMove = false;
+                }
+                if (legalMove && showDialog) {
+                    showInputDialog(Math.abs(coord[1] - y) + 1, x, y, true);
+                } else if (lettercount>7) {
+                    showMessageDialog("Impossible placement! Too many letters used!");
+                    clearSelectionsOnBoard();
+                } else if (firstTurn && showDialog){
+                    showMessageDialog("It is the first turn, you have to use the middle tile!");
+                    clearSelectionsOnBoard();
+                } else if (showDialog){
+                    showMessageDialog("Illegal move: Doesn't connect to any letter on the board!");
+                    clearSelectionsOnBoard();
+                }
+            }
+            if (coord[1]==y && coord[0]!=x) {
+                firstSelection=true;
+                if (coord[0] < x) {
+                    int temp = x;
+                    x = coord[0];
+                    coord[0] = temp;
+                }
+                if (firstTurn && coord[0]>=7 && x <=7  && y==7) {
+                    legalMove = true;
+                }
+                int lettercount = 0;
+                for (int i = x; i <= coord[0]; i++) {
+                    boardImages[i][y].setBackgroundResource(R.drawable.box_selected);
+                    if ((board[i][y] != EMPTY || checkAdjacentTiles(i, y)) && !firstTurn) {
+                        legalMove = true;
+                    }
+                    if (board[i][y] == EMPTY) {
+                        lettercount++;
+                    }
+                }
+                if (lettercount>7) {
+                    legalMove = false;
+                }
+                if (legalMove && showDialog) {
+                    showInputDialog(Math.abs(coord[0] - x) + 1, x, y, false);
+                } else if (lettercount>7) {
+                    showMessageDialog("Impossible placement! Too many letters used!");
+                    clearSelectionsOnBoard();
+                } else if (firstTurn && showDialog){
+                    showMessageDialog("It is the first turn, you have to use the middle tile!");
+                    clearSelectionsOnBoard();
+                } else if (showDialog){
+                    showMessageDialog("Illegal move: Doesn't connect to any letter on the board!");
+                    clearSelectionsOnBoard();
+                }
+            }
+        }
+    }
+
+    private boolean checkAdjacentTiles(int x, int y) {
+        return (x != 0 && board[x-1][y] != EMPTY) || (x != 14 && board[x+1][y] != EMPTY)
+                || (y != 0 && board[x][y-1] != EMPTY) || (y != 14 && board[x][y+1] != EMPTY);
+    }
+
+    private void clearSelectionsOnBoard() {
+        for (int i=0; i<15; i++) {
+            for (int j=0; j<15; j++) {
+                boardImages[i][j].setBackgroundResource(R.drawable.box);
+            }
+        }
+        drawBonusFields();
+    }
+
+    private void parseHand(String handString) {
+        for (int i=0; i<handString.length(); i++) {
+            hand.add(handString.charAt(i));
+            if (handString.charAt(i) == '.') {
+                handimages.get(i).setImageResource(getResources().getIdentifier("joker", "drawable", getPackageName()));
+            } else {
+                handimages.get(i).setImageResource(getResources().getIdentifier(String.valueOf(handString.charAt(i)), "drawable", getPackageName()));
+            }
+        }
+    }
+
+    private void refreshHand() {
+        for (int i = 0; i < 7; i++) {
+            if (i < hand.size()) {
+                if (hand.get(i) == '.') {
+                    handimages.get(i).setImageResource(getResources().getIdentifier("joker", "drawable", getPackageName()));
+                } else {
+                    handimages.get(i).setImageResource(getResources().getIdentifier(hand.get(i).toString(), "drawable", getPackageName()));
+                }
+
+            } else {
+                handimages.get(i).setImageResource(android.R.color.transparent);
+            }
+        }
+    }
+
+    private void resetBoard() {
+        for (int i=0; i<15; i++) {
+            for (int j=0; j<15; j++) {
+                board[i][j]=EMPTY;
+                boardImages[i][j].setImageResource(android.R.color.transparent);
+            }
+        }
+        firstTurn=true;
+    }
+
+    private void setScore(int score) {
+        TextView scoreText = (TextView) findViewById(getResources().getIdentifier("score", "id", getPackageName()));
+        scoreText.setText("points: " + score);
+        this.score = score;
+    }
+
+    //define dialogs
     private void showTopScoreDialog(HighScoreDTO[] highScores) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
         builder.setTitle("High Scores");
@@ -473,6 +717,7 @@ public class MainActivity extends AppCompatActivity {
         builder.show();
     }
 
+    //Generic message dialog, use this to show any message in a popup on the screen
     private void showMessageDialog(String errorMessage) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
         builder.setTitle(errorMessage);
@@ -485,71 +730,6 @@ public class MainActivity extends AppCompatActivity {
         builder.show();
     }
 
-    private void placeWord(String word, int x, int y, boolean across, boolean ownPlacement) {
-
-        char[] boardSave = new char[word.length()];
-        if (!across) {
-            for (int i = 0; i < word.length(); i++) {
-                if (isOverWrite(x + i, y, word.charAt(i))) {
-                    for (int k = 0; k < i; k++) {
-                        if (boardSave[k] == EMPTY) {
-                            boardImages[x + k][y].setImageResource(android.R.color.transparent);
-                            board[x + k][y] = EMPTY;
-                        } else {
-                            boardImages[x + k][y].setImageResource(getResources().getIdentifier(Character.toString(boardSave[k]), "drawable", getPackageName()));
-                            board[x + k][y] = boardSave[k];
-                        }
-                    }
-                    showMessageDialog("Illegal move: OverWriting letter already on board!");
-                    break;
-                }
-                if (ownPlacement) {
-                    if (!hand.contains(new Character(word.charAt(i)))) {
-                        hand.remove(new Character('.'));
-                    } else {
-                        hand.remove(new Character(word.charAt(i)));
-                    }
-                }
-                boardSave[i] = board[x + i][y];
-                board[x + i][y] = word.charAt(i);
-                boardImages[x + i][y].setImageResource(getResources().getIdentifier(Character.toString(word.charAt(i)), "drawable", getPackageName()));
-            }
-        } else {
-            for (int i = 0; i < word.length(); i++) {
-                if (isOverWrite(x, y + i, word.charAt(i))) {
-                    for (int k = 0; k < i; k++) {
-                        if (boardSave[k] == EMPTY) {
-                            boardImages[x][y + k].setImageResource(android.R.color.transparent);
-                            board[x][y + k] = EMPTY;
-                        } else {
-                            boardImages[x][y + k].setImageResource(getResources().getIdentifier(Character.toString(boardSave[k]), "drawable", getPackageName()));
-                            board[x][y + k] = boardSave[k];
-                        }
-                    }
-                    showMessageDialog("Illegal move: OverWriting letter already on board!");
-                    break;
-                }
-                if (ownPlacement) {
-                    if (!hand.contains(new Character(word.charAt(i)))) {
-                        hand.remove(new Character('.'));
-                    } else {
-                        hand.remove(new Character(word.charAt(i)));
-                    }
-                }
-                boardSave[i] = board[x][y + i];
-                board[x][y + i] = word.charAt(i);
-                boardImages[x][y + i].setImageResource(getResources().getIdentifier(Character.toString(word.charAt(i)), "drawable", getPackageName()));
-            }
-        }
-        firstTurn = false;
-        refreshHand();
-    }
-
-    private boolean isOverWrite(int x, int y, char c) {
-        char ch = board[x][y];
-        return ch != EMPTY && ch != c;
-    }
-
     @Override
     public void onResume() {
         super.onResume();
@@ -560,182 +740,8 @@ public class MainActivity extends AppCompatActivity {
         return (int)(dp * ((float)displayMetrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT));
     }
 
-    private void setupBoard(){
-        boardImages = new ImageView[15][15];
-        android.widget.GridLayout boardLayout = (android.widget.GridLayout) findViewById(R.id.board);
-        int tilePadding = dpToPixel(3);
-        int tileSize = dpToPixel(20);
-        for (int i=0; i<15; i++) {
-            for (int j = 0; j < 15; j++) {
-                ImageView tile = new ImageView(this);
-                tile.setLayoutParams(new GridLayout.LayoutParams(new ViewGroup.LayoutParams(tileSize, tileSize)));
-                tile.setAdjustViewBounds(true);
-                tile.setScaleType(ImageView.ScaleType.FIT_XY);
-                tile.setPadding(tilePadding, tilePadding, tilePadding, tilePadding);;
-                final int x = i;
-                final int y = j;
-                tile.setOnTouchListener(new View.OnTouchListener() {
-                    @Override
-                    public boolean onTouch(View v, MotionEvent event) {
-
-                        selectTile(x, y, true);
-
-                        return false;
-                    }
-                });
-                if (board[i][j] != EMPTY) {
-                    tile.setImageResource(getResources().getIdentifier(Character.toString(board[i][j]), "drawable", getPackageName()));
-                } else {
-                    tile.setImageResource(android.R.color.transparent);
-                }
-                boardImages[i][j] = tile;
-                boardLayout.addView(tile);
-            }
-        }
-        drawBonusFields();
-    }
-
-    private void selectTile(int x, int y, boolean showDialog) {
-        boolean legalMove = false;
-        if (firstSelection) {
-            clearSelectionsOnBoard();
-            coord[0]=x;
-            coord[1]=y;
-            firstSelection=false;
-            boardImages[x][y].setBackgroundResource(R.drawable.box_preselected);
-        } else {
-            if (coord[0]==x && coord[1]!=y) {
-                firstSelection=true;
-                if (coord[1] < y) {
-                    int temp = y;
-                    y = coord[1];
-                    coord[1] = temp;
-                }
-                if (firstTurn && coord[1]>=7 && y <=7 && x==7) {
-                    legalMove = true;
-                }
-                int lettercount = 0;
-                for (int i = y; i <= coord[1]; i++) {
-                    boardImages[x][i].setBackgroundResource(R.drawable.box_selected);
-                    if ((board[x][i] != EMPTY || checkAdjacentTiles(x, i)) && !firstTurn) {
-                        legalMove = true;
-                    }
-                    if (board[x][i] == EMPTY) {
-                        lettercount++;
-                    }
-                }
-                if (lettercount>8) {
-                    legalMove = false;
-                }
-                if (legalMove && showDialog) {
-                    showInputDialog(Math.abs(coord[1] - y) + 1, x, y, true);
-                } else if (lettercount>7) {
-                    showMessageDialog("Impossible placement! Too many letters used!");
-                    clearSelectionsOnBoard();
-                } else if (firstTurn && showDialog){
-                    showMessageDialog("It is the first turn, you have to use the middle tile!");
-                    clearSelectionsOnBoard();
-                } else if (showDialog){
-                    showMessageDialog("Illegal move: Doesn't connect to any letter on the board!");
-                    clearSelectionsOnBoard();
-                }
-            }
-            if (coord[1]==y && coord[0]!=x) {
-                firstSelection=true;
-                if (coord[0] < x) {
-                    int temp = x;
-                    x = coord[0];
-                    coord[0] = temp;
-                }
-                if (firstTurn && coord[0]>=7 && x <=7  && y==7) {
-                    legalMove = true;
-                }
-                int lettercount = 0;
-                for (int i = x; i <= coord[0]; i++) {
-                    boardImages[i][y].setBackgroundResource(R.drawable.box_selected);
-                    if ((board[i][y] != EMPTY || checkAdjacentTiles(i, y)) && !firstTurn) {
-                        legalMove = true;
-                    }
-                    if (board[i][y] == EMPTY) {
-                        lettercount++;
-                    }
-                }
-                if (lettercount>7) {
-                    legalMove = false;
-                }
-                if (legalMove && showDialog) {
-                    showInputDialog(Math.abs(coord[0] - x) + 1, x, y, false);
-                } else if (lettercount>7) {
-                    showMessageDialog("Impossible placement! Too many letters used!");
-                    clearSelectionsOnBoard();
-                } else if (firstTurn && showDialog){
-                    showMessageDialog("It is the first turn, you have to use the middle tile!");
-                    clearSelectionsOnBoard();
-                } else if (showDialog){
-                    showMessageDialog("Illegal move: Doesn't connect to any letter on the board!");
-                    clearSelectionsOnBoard();
-                }
-            }
-        }
-    }
-
-    private boolean checkAdjacentTiles(int x, int y) {
-        return (x != 0 && board[x-1][y] != EMPTY) || (x != 14 && board[x+1][y] != EMPTY)
-                || (y != 0 && board[x][y-1] != EMPTY) || (y != 14 && board[x][y+1] != EMPTY);
-    }
-
-    private void clearSelectionsOnBoard() {
-        for (int i=0; i<15; i++) {
-            for (int j=0; j<15; j++) {
-                boardImages[i][j].setBackgroundResource(R.drawable.box);
-            }
-        }
-        drawBonusFields();
-    }
-
-    private void parseHand(String handString) {
-        for (int i=0; i<handString.length(); i++) {
-            hand.add(handString.charAt(i));
-            if (handString.charAt(i) == '.') {
-                handimages.get(i).setImageResource(getResources().getIdentifier("joker", "drawable", getPackageName()));
-            } else {
-                handimages.get(i).setImageResource(getResources().getIdentifier(String.valueOf(handString.charAt(i)), "drawable", getPackageName()));
-            }
-        }
-    }
-
-    private void refreshHand() {
-        for (int i = 0; i < 7; i++) {
-            if (i < hand.size()) {
-                if (hand.get(i) == '.') {
-                    handimages.get(i).setImageResource(getResources().getIdentifier("joker", "drawable", getPackageName()));
-                } else {
-                    handimages.get(i).setImageResource(getResources().getIdentifier(hand.get(i).toString(), "drawable", getPackageName()));
-                }
-
-            } else {
-                handimages.get(i).setImageResource(android.R.color.transparent);
-            }
-        }
-    }
-
-    private void resetBoard() {
-        for (int i=0; i<15; i++) {
-            for (int j=0; j<15; j++) {
-                board[i][j]=EMPTY;
-                boardImages[i][j].setImageResource(android.R.color.transparent);
-            }
-        }
-        firstTurn=true;
-    }
-
-    private void setScore(int score) {
-        TextView scoreText = (TextView) findViewById(getResources().getIdentifier("score", "id", getPackageName()));
-        scoreText.setText("points: " + score);
-        this.score = score;
-    }
-
     private void drawBonusFields() {
+        //these are used as R.drawable.$
         String[][] bonuses = new String[][]{{"tripleword", "box", "box", "doubleletter", "box", "box", "box", "tripleword", "box", "box", "box", "doubleletter", "box", "box", "tripleword"},
                                             {"box", "doubleword", "box", "box", "box", "tripleletter", "box", "box", "box", "tripleletter", "box", "box", "box", "doubleword", "box"},
                                             {"box", "box", "doubleword", "box", "box", "box", "doubleletter", "box", "doubleletter", "box", "box", "box", "doubleword", "box", "box"},

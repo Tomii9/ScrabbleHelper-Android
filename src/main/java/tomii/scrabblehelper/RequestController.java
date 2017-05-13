@@ -307,19 +307,6 @@ public class RequestController {
         return tempResponse;
     }
 
-    public boolean checkServerStatus() {
-        operation = "status";
-        try {
-            new BooleanHttpRequestTask(paramNames, params).execute().get();
-        } catch (Exception e) {
-            Log.e("RequestController", e.getMessage(), e);
-            return false;
-        }
-        boolean tempResponse = response;
-        reset();
-        return tempResponse;
-    }
-
     private void reset() {
         response = false;
         operation = new String();
@@ -327,7 +314,7 @@ public class RequestController {
         params = new ArrayList<String>();
     }
 
-
+    //HTTPRequest inner classes
     private class BooleanHttpRequestTask extends AsyncTask<Void, Void, Boolean> {
 
         String url = new String();
